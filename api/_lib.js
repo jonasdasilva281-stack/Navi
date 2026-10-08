@@ -183,14 +183,14 @@ async function pesquisarComAlternativas(input) {
         try { const mais = await pesquisar(niveis[2].mk(Object.assign({}, input, { flyFrom: org.code }))); const ids = new Set(itens.map(x => x.id)); mais.forEach(x => { if (!ids.has(x.id)) { x.estadiaDiferente = true; itens.push(x); } }); itens.sort((a, b) => a.price - b.price); } catch { }
       }
       const partes = [];
-      if (org.code !== o) partes.push(`Não há preços guardados a partir de ${cidade(o)}. Estes preços são a partir de ${cidade(org.code)}, a cerca de ${org.km} km: some a ligação até lá`);
-      if (nv.nome === "datas") partes.push(`${partes.length ? "e as datas" : "Não há preços guardados para as datas exatas. As datas"} são as mais próximas, no mesmo mês`);
-      if (nv.nome === "estadia") partes.push(`${partes.length ? "e as datas e a duração da estadia" : "Não há preços guardados para estas datas. As datas e a duração da estadia"} são as mais próximas que encontrámos`);
+      if (org.code !== o) partes.push(`A partir de ${cidade(o)} não encontrámos preços para estas datas. Mostramos voos a partir de ${cidade(org.code)}, a cerca de ${org.km} km: conte com a ligação até lá`);
+      if (nv.nome === "datas") partes.push(`${partes.length ? "e as datas" : "Para as datas exatas não encontrámos preços. Estas"} são as mais próximas, no mesmo mês`);
+      if (nv.nome === "estadia") partes.push(`${partes.length ? "e as datas e a duração da estadia" : "Para estas datas não encontrámos preços. Estas datas e estadias"} são as mais próximas que encontrámos`);
       itens.forEach(it => { it.approx = org.code !== o ? "origem" : "datas"; if (nv.nome !== "exato") it.approxDatas = true; });
-      return { itineraries: itens, aoVivo, aviso: { tipo: org.code !== o ? "origem" : "datas", hub: org.code !== o ? org.code : null, km: org.km, texto: partes.join(", ") + ". A pesquisa ao vivo mostra todos os voos nas datas exatas." } };
+      return { itineraries: itens, aoVivo, aviso: { tipo: org.code !== o ? "origem" : "datas", hub: org.code !== o ? org.code : null, km: org.km, texto: partes.join(", ") + "." } };
     }
   }
-  return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Ainda não há preços guardados para esta rota. A pesquisa ao vivo na Aviasales mostra todos os voos disponíveis neste momento.` } };
+  return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Não encontrámos preços para esta rota nestas datas. Experimente outras datas ou um aeroporto próximo.` } };
 }
 
 /* ---------- Anthropic ---------- */
