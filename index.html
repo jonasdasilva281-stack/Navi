@@ -2218,8 +2218,6 @@ function roboDeLado(){
 
 /* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */
 function boasVindas(){
-  let visto=false; try{ visto=sessionStorage.getItem("navi-bv")==="1"; }catch{}
-  if(visto) return;
   const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","wel-t");
   const box=el("div","hand-box");
   const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
@@ -2230,7 +2228,7 @@ function boasVindas(){
   const bBar=opt("","🔎","Pesquisar sozinho","Preencho origem, destino e datas na barra de pesquisa.");
   const opts=el("div","wel-opts"); opts.append(bChat,bBar); box.append(opts);
   ov.append(box); document.body.append(ov);
-  const fechar=()=>{ try{ sessionStorage.setItem("navi-bv","1"); }catch{} ov.remove(); document.removeEventListener("keydown",esc); };
+  const fechar=()=>{ ov.remove(); document.removeEventListener("keydown",esc); };
   const esc=e=>{ if(e.key==="Escape") fechar(); };
   document.addEventListener("keydown",esc);
   bChat.onclick=()=>{ fechar(); abrirRobo(); };
