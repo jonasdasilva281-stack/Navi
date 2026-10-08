@@ -46,7 +46,7 @@ async function nomeCompanhia(code) {
   if (!COMPANHIAS) {
     COMPANHIAS = {};
     try {
-      const r = await fetch("https://api.travelpayouts.com/data/en/airlines.json", { headers: { "Accept-Encoding": "gzip, deflate" } });
+      const r = await fetch("https://api.travelpayouts.com/data/en/airlines.json");
       const arr = await r.json();
       arr.forEach(a => { if (a.code) COMPANHIAS[a.code] = (a.name_translations && a.name_translations.en) || a.name || a.code; });
     } catch { /* sem nomes: usa o código */ }
@@ -62,7 +62,7 @@ async function tpPricesForDates(q) {
   const mk = TP_MARKET || mercado(q.origin);
   if (mk) u.searchParams.set("market", mk);
   u.searchParams.set("token", TP_TOKEN);
-  const r = await fetch(u, { headers: { "Accept-Encoding": "gzip, deflate" } });
+  const r = await fetch(u);
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.success === false) throw Object.assign(new Error(j.error || `Travelpayouts respondeu ${r.status}`), { code: "upstream" });
   return Array.isArray(j.data) ? j.data : [];
@@ -154,31 +154,41 @@ async function pesquisar(input) {
  */
 async function pesquisarComAlternativas(input) {
   const o = iata(input.flyFrom), d = iata(input.flyTo);
-  const ida = fromDMY(input.departureDate), volta = fromDMY(input.returnDate);
-  const aoVivo = (o && d && ida) ? linkAoVivo(o, d, ida, volta || (input.nights_in_dst_from != null ? addDays(ida, +input.nights_in_dst_from) : null), input.adults) : null;
-  let itens = await pesquisar(input);
-  if (itens.length) return { itineraries: itens, aoVivo };
-  // 2) datas próximas: mês inteiro de partida, estadia ±7 dias
-  const d1 = ida, d2 = fromDMY(input.departureDateTo) || ida;
-  if (d1) {
-    const solto = Object.assign({}, input, { departureDate: "01/" + d1.slice(5, 7) + "/" + d1.slice(0, 4), departureDateTo: null, departureDateFlexDays: 0, returnDateFlexDays: 0 });
-    const fimMes = new Date(Date.UTC(+d2.slice(0, 4), +d2.slice(5, 7), 0)).toISOString().slice(0, 10);
-    solto.departureDateTo = fimMes.split("-").reverse().join("/");
-    if (volta) { const n = daysDiff(d1, volta); solto.returnDate = null; solto.nights_in_dst_from = Math.max(1, n - 7); solto.nights_in_dst_to = n + 7; }
-    else if (input.nights_in_dst_from != null) { solto.nights_in_dst_from = Math.max(1, +input.nights_in_dst_from - 7); solto.nights_in_dst_to = +(input.nights_in_dst_to || input.nights_in_dst_from) + 7; }
-    itens = await pesquisar(solto);
-    if (itens.length) { itens.forEach(it => { it.approx = "datas"; }); return { itineraries: itens, aoVivo, aviso: { tipo: "datas", texto: `Não há preços guardados para as datas exatas. Mostramos as datas mais próximas, no mesmo mês, que têm preço conhecido.` } }; }
-  }
-  // 3) a partir do grande aeroporto mais próximo
-  for (const { h, km: dist } of hubsPerto(o).slice(0, 2)) {
-    if (dist > 1200) continue;
-    try {
-      const alt = await pesquisar(Object.assign({}, input, { flyFrom: h }));
-      if (alt.length) {
-        alt.forEach(it => { it.approx = "origem"; });
-        return { itineraries: alt, aoVivo, aviso: { tipo: "origem", hub: h, km: dist, texto: `Não há preços guardados a partir de ${cidade(o)}. Estes preços são a partir de ${NOMES_HUB[h] || h}, a cerca de ${dist} km. Some a ligação de ${cidade(o)} até lá, ou veja a pesquisa ao vivo, que inclui ${cidade(o)}.` } };
+  const ida = fromDMY(input.departureDate);
+  const volta = fromDMY(input.returnDate);
+  const nPed = input.nights_in_dst_from != null ? +input.nights_in_dst_from : (volta && ida ? daysDiff(ida, volta) : null);
+  const aoVivo = (o && d && ida) ? linkAoVivo(o, d, ida, volta || (nPed != null ? addDays(ida, nPed) : null), input.adults) : null;
+  if (!ida) return { itineraries: await pesquisar(input), aoVivo };
+  const d2 = fromDMY(input.departureDateTo) || ida;
+  const fimMes = iso => new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7), 0)).toISOString().slice(0, 10);
+  const dmy = iso => iso.split("-").reverse().join("/");
+  const idaEVolta = !!volta || input.nights_in_dst_from != null;
+  // Níveis: exato → mesmo mês, estadia ±7 dias → mesmo mês, qualquer estadia
+  const niveis = [
+    { nome: "exato", mk: base => base },
+    { nome: "datas", mk: base => { const q = Object.assign({}, base, { departureDate: "01/" + ida.slice(5, 7) + "/" + ida.slice(0, 4), departureDateTo: dmy(fimMes(d2)), departureDateFlexDays: 0, returnDateFlexDays: 0, returnDate: null });
+      if (idaEVolta && nPed != null) { const nMax = input.nights_in_dst_to != null ? +input.nights_in_dst_to : nPed; q.nights_in_dst_from = Math.max(1, nPed - 7); q.nights_in_dst_to = nMax + 7; } return q; } },
+    { nome: "estadia", mk: base => { const q = Object.assign({}, base, { departureDate: "01/" + ida.slice(5, 7) + "/" + ida.slice(0, 4), departureDateTo: dmy(fimMes(d2)), departureDateFlexDays: 0, returnDateFlexDays: 0, returnDate: null });
+      if (idaEVolta) { q.nights_in_dst_from = 1; q.nights_in_dst_to = 90; } return q; } }
+  ];
+  const origens = [{ code: o, km: 0 }].concat(hubsPerto(o).filter(x => x.km <= 1200).slice(0, 2).map(x => ({ code: x.h, km: x.km })));
+  for (const org of origens) {
+    for (const nv of niveis) {
+      let itens = [];
+      try { itens = await pesquisar(nv.mk(Object.assign({}, input, { flyFrom: org.code }))); } catch (e) { if (e.code === "config" || e.code === "input") throw e; }
+      if (!itens.length) continue;
+      if (org.code === o && nv.nome === "exato") return { itineraries: itens, aoVivo };
+      // Poucas opções? Junta também as de estadia diferente, para o cliente ter por onde escolher.
+      if (nv.nome !== "estadia" && itens.length < 5) {
+        try { const mais = await pesquisar(niveis[2].mk(Object.assign({}, input, { flyFrom: org.code }))); const ids = new Set(itens.map(x => x.id)); mais.forEach(x => { if (!ids.has(x.id)) { x.estadiaDiferente = true; itens.push(x); } }); itens.sort((a, b) => a.price - b.price); } catch { }
       }
-    } catch { /* tenta o próximo */ }
+      const partes = [];
+      if (org.code !== o) partes.push(`Não há preços guardados a partir de ${cidade(o)}. Estes preços são a partir de ${cidade(org.code)}, a cerca de ${org.km} km: some a ligação até lá`);
+      if (nv.nome === "datas") partes.push(`${partes.length ? "e as datas" : "Não há preços guardados para as datas exatas. As datas"} são as mais próximas, no mesmo mês`);
+      if (nv.nome === "estadia") partes.push(`${partes.length ? "e as datas e a duração da estadia" : "Não há preços guardados para estas datas. As datas e a duração da estadia"} são as mais próximas que encontrámos`);
+      itens.forEach(it => { it.approx = org.code !== o ? "origem" : "datas"; if (nv.nome !== "exato") it.approxDatas = true; });
+      return { itineraries: itens, aoVivo, aviso: { tipo: org.code !== o ? "origem" : "datas", hub: org.code !== o ? org.code : null, km: org.km, texto: partes.join(", ") + ". A pesquisa ao vivo mostra todos os voos nas datas exatas." } };
+    }
   }
   return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Ainda não há preços guardados para esta rota. A pesquisa ao vivo na Aviasales mostra todos os voos disponíveis neste momento.` } };
 }

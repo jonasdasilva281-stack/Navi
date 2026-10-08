@@ -1166,7 +1166,8 @@ let CTX={pax:1,bagsWanted:0};
 function priceSub(){ return `Total estimado com taxas · ${CTX.pax} pessoa${CTX.pax>1?"s":""} · confirme no site`; }
 function badges(it, infos){
   const w=el("div","badges"); const add=(t,c)=>w.append(el("span","b "+(c||""),t));
-  if(it.approx==="datas") add("Data próxima da pedida","warn");
+  if(it.approx==="datas"||it.approxDatas) add("Data próxima da pedida","warn");
+  if(it.estadiaDiferente&&it.inbound) add(`Estadia de ${Math.round((pdate(it.inbound.departureTime)-pdate(it.outbound.departureTime))/86400000)} dias`,"warn");
   if(it.approx==="origem") add(`Sai de ${(it.outbound.segments&&it.outbound.segments[0].fromCity)||it.outbound.from}`,"bad");
   if(it.baggage==null){ add(CTX.bagsWanted?"Bagagem: confirme no site":"Preço visto nas últimas 48 h","warn"); }
   const got=it.baggage?(+it.baggage.checkedBag||0):0;
