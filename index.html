@@ -2334,7 +2334,41 @@ fetch("airports.json").then(r=>r.json()).then(d=>{ AIR=d; d.forEach(a=>{ AIRMAP[
 const startHash=(location.hash||"").slice(1); if(TABS.includes(startHash)) showTab(startHash);
 syncTripLines();
 mcp={}; renderAlerts();
-fetch("/api/estado").then(r=>r.json()).then(e=>{ AI=!!e.agente; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
+/* ---------- país do cliente: moeda e vocabulário (Brasil / Portugal) ---------- */
+const EURO=new Set("PT ES FR DE IT NL BE LU IE AT FI GR SK SI EE LV LT MT CY HR".split(" "));
+let PAIS="";
+function aplicarPais(p){
+  try{ const q=new URLSearchParams(location.search).get("pais"); if(q) p=q; }catch{}
+  PAIS=String(p||"").toUpperCase();
+  let manual=null; try{ manual=localStorage.getItem("navi-cur"); }catch{}
+  const moeda=manual || (PAIS==="BR"?"BRL":EURO.has(PAIS)||PAIS==="GB"||PAIS==="CH"?"EUR":PAIS==="US"?"USD":PAIS?"EUR":"BRL");
+  const sel=$("cur"); if(sel){ sel.value=moeda; } CUR=moeda;
+  if(PAIS==="BR") ativarBR();
+}
+(function(){ const sel=$("cur"); if(sel) sel.addEventListener("change",()=>{ try{ localStorage.setItem("navi-cur",sel.value); }catch{} CUR=sel.value; }); })();
+// Português do Brasil: troca as palavras de Portugal no ecrã.
+const BR_PAL=[["telemóveis","celulares"],["telemóvel","celular"],["autocarro","ônibus"],["ecrã","tela"],["aluguer","aluguel"],["pequeno-almoço","café da manhã"],["equipa","equipe"],["contacto","contato"],["facto","fato"],
+  ["A procurar","Procurando"],["perceber","entender"],["percebe","entende"],["carregue em","clique em"],["Carregue em","Clique em"],["para si","para você"],["consigo","consigo"],
+  ["o regresso","a volta"],["O regresso","A volta"],["do regresso","da volta"],["no regresso","na volta"],["ao regresso","à volta"],["regressos","voltas"],["regresso","volta"],["Regresso","Volta"],
+  ["malas de porão","malas despachadas"],["mala de porão","mala despachada"],["Guardar","Salvar"],["guardar","salvar"],["guardados","salvos"],["guardadas","salvas"],["guardado","salvo"],["guardada","salva"],["guardou","salvou"],["Guardado","Salvo"]];
+const BR_RE=BR_PAL.filter(([a,b])=>a!==b).map(([a,b])=>[new RegExp("(?<![\\p{L}-])"+a.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?![\\p{L}])","gu"),b]);
+function trBR(t){ if(!t) return t; let r=t; for(const [re,b] of BR_RE) r=r.replace(re,b); return r; }
+function trNode(root){
+  if(root.nodeType===3){ const v=trBR(root.nodeValue); if(v!==root.nodeValue) root.nodeValue=v; return; }
+  if(root.nodeType!==1||/^(SCRIPT|STYLE|SVG|TEXTAREA)$/i.test(root.nodeName)) return;
+  ["placeholder","aria-label","title"].forEach(a=>{ const v=root.getAttribute&&root.getAttribute(a); if(v){ const n=trBR(v); if(n!==v) root.setAttribute(a,n); } });
+  if(root.tagName==="INPUT"||root.tagName==="SELECT") return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,{acceptNode:n=>n.nodeType===1&&/^(SCRIPT|STYLE|TEXTAREA)$/i.test(n.nodeName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  let n; while((n=w.nextNode())){ if(n.nodeType===3){ const v=trBR(n.nodeValue); if(v!==n.nodeValue) n.nodeValue=v; } else ["placeholder","aria-label","title"].forEach(a=>{ const v=n.getAttribute(a); if(v){ const x=trBR(v); if(x!==v) n.setAttribute(a,x); } }); }
+}
+let BR_ON=false;
+function ativarBR(){
+  if(BR_ON) return; BR_ON=true; document.documentElement.lang="pt-BR";
+  document.title=trBR(document.title); trNode(document.body);
+  new MutationObserver(ms=>{ for(const m of ms){ if(m.type==="characterData") trNode(m.target); else m.addedNodes.forEach(trNode); } }).observe(document.body,{childList:true,subtree:true,characterData:true});
+}
+
+fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.agente; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
