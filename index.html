@@ -450,6 +450,10 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .live-top{align-items:center;flex-wrap:wrap}
 .aviso-fonte .live-btn{margin-top:10px}
 .hand{position:fixed;inset:0;z-index:80;background:rgba(8,18,31,.55);display:grid;place-items:center;padding:16px;animation:rise .2s both}
+.navi-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border:0;border-radius:999px;background:#0b1a2c;color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 12px 30px rgba(8,18,31,.35);animation:rise .3s both}
+.navi-fab svg{width:36px;height:36px;flex:none}
+.navi-fab:hover{transform:translateY(-2px)}
+.navi-fab[hidden]{display:none}
 .wel-opts{display:grid;gap:10px}
 .wel-opt{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;text-align:left;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
 .wel-opt:hover,.wel-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
@@ -467,6 +471,7 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .hand-go{justify-content:center;padding:13px}
 /* ===== Conversa com a Navi ===== */
 .nchat{max-width:none!important;width:auto!important;justify-self:stretch!important;margin:0!important}
+.nchat[hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .bar-toggle{justify-self:start;margin-top:4px;font:inherit;font-size:13px;font-weight:700;color:#cfe0f5;background:none;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 14px;cursor:pointer}
 .bar-toggle:hover{background:rgba(255,255,255,.08)}
@@ -2190,6 +2195,27 @@ document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
   boasVindas();
 })();
 
+/* ---------- robô: em destaque (conversa) ou de lado (botão flutuante) ---------- */
+function naviFab(){
+  let b=$("navi-fab"); if(b) return b;
+  b=el("button","navi-fab"); b.id="navi-fab"; b.type="button"; b.hidden=true; b.setAttribute("aria-label","Falar com a Navi");
+  b.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="32" fill="#16283d"/><g transform="rotate(45 32 32)"><path d="M32 14L44 44L32 37.5L20 44Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g></svg><span>Falar com a Navi</span>';
+  b.onclick=abrirRobo; document.body.append(b); return b;
+}
+function abrirRobo(){
+  $("nchat").hidden=false; naviFab().hidden=true;
+  showTab("procurar");
+  $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});
+  setTimeout(()=>{ const t=$("nc-text"); t&&t.focus({preventScroll:true}); },400);
+}
+function roboDeLado(){
+  $("nchat").hidden=true; naviFab().hidden=false;
+  if($("f").hidden) $("bar-toggle").click();
+  showTab("procurar");
+  $("f").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});
+  setTimeout(()=>{ const o=$("orig"); o&&o.focus({preventScroll:true}); },400);
+}
+
 /* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */
 function boasVindas(){
   let visto=false; try{ visto=sessionStorage.getItem("navi-bv")==="1"; }catch{}
@@ -2207,8 +2233,8 @@ function boasVindas(){
   const fechar=()=>{ try{ sessionStorage.setItem("navi-bv","1"); }catch{} ov.remove(); document.removeEventListener("keydown",esc); };
   const esc=e=>{ if(e.key==="Escape") fechar(); };
   document.addEventListener("keydown",esc);
-  bChat.onclick=()=>{ fechar(); $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); };
-  bBar.onclick=()=>{ fechar(); if($("f").hidden) $("bar-toggle").click(); $("f").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); setTimeout(()=>{ const o=$("orig"); o&&o.focus(); },350); };
+  bChat.onclick=()=>{ fechar(); abrirRobo(); };
+  bBar.onclick=()=>{ fechar(); roboDeLado(); };
   bChat.focus();
 }
 
