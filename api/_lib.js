@@ -1,6 +1,6 @@
 // Funções partilhadas pelo servidor da Navi (Vercel Serverless, Node 18+).
 // Chaves lidas das variáveis de ambiente do Vercel — nunca no código.
-const AEROPORTOS = require("./_aeroportos.json"); // IATA -> [cidade, fuso horário]
+const AEROPORTOS = require("./_aeroportos.json"); // IATA -> [cidade, fuso horário, país, lat, lon]
 
 const TP_TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "";
 const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "787293"; // marker de parceiro (público)
@@ -15,7 +15,21 @@ function addDays(iso, n) { const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(
 function monthsBetween(a, b) { const out = []; let y = +a.slice(0, 4), m = +a.slice(5, 7); const ye = +b.slice(0, 4), me = +b.slice(5, 7); while (y < ye || (y === ye && m <= me)) { out.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } if (out.length > 3) break; } return out; }
 function daysDiff(a, b) { return Math.round((new Date(b.slice(0, 10) + "T00:00:00Z") - new Date(a.slice(0, 10) + "T00:00:00Z")) / 86400000); }
 function iata(s) { const m = String(s || "").match(/\(([A-Za-z]{3})\)/); if (m) return m[1].toUpperCase(); const w = String(s || "").trim(); return /^[A-Za-z]{3}$/.test(w) ? w.toUpperCase() : ""; }
-function cidade(code) { return (AEROPORTOS[code] && AEROPORTOS[code][0]) || code; }
+const MERCADOS = { BR: "br", PT: "pt", ES: "es", US: "us", GB: "uk", FR: "fr", DE: "de", IT: "it", AR: "ar", CL: "cl", CO: "co", MX: "mx", PE: "pe", CA: "ca" };
+function mercado(code) { const a = AEROPORTOS[code]; return a ? (MERCADOS[a[2]] || "") : ""; }
+// Grandes aeroportos/cidades com muitos preços guardados, por país.
+const HUBS_PAIS = { BR: ["SAO", "RIO", "BSB"], PT: ["LIS", "OPO"], ES: ["MAD", "BCN"], US: ["NYC", "MIA", "LAX"], AR: ["BUE"], CL: ["SCL"], CO: ["BOG"], MX: ["MEX"], PE: ["LIM"], GB: ["LON"], FR: ["PAR"], IT: ["ROM", "MIL"], DE: ["FRA", "MUC"], CA: ["YTO"] };
+const HUB_COORD = { SAO: [-23.44, -46.47], RIO: [-22.81, -43.25], BSB: [-15.87, -47.92], LIS: [38.78, -9.14], OPO: [41.24, -8.68], MAD: [40.49, -3.57], BCN: [41.3, 2.08], NYC: [40.64, -73.78], MIA: [25.79, -80.29], LAX: [33.94, -118.41], BUE: [-34.82, -58.54], SCL: [-33.39, -70.79], BOG: [4.7, -74.15], MEX: [19.44, -99.07], LIM: [-12.02, -77.11], LON: [51.47, -0.45], PAR: [49.01, 2.55], ROM: [41.8, 12.25], MIL: [45.63, 8.72], FRA: [50.03, 8.56], MUC: [48.35, 11.79], YTO: [43.68, -79.63] };
+const NOMES_HUB = { SAO: "São Paulo", RIO: "Rio de Janeiro", BSB: "Brasília", LIS: "Lisboa", OPO: "Porto", MAD: "Madrid", BCN: "Barcelona", NYC: "Nova Iorque", MIA: "Miami", LAX: "Los Angeles", BUE: "Buenos Aires", SCL: "Santiago", BOG: "Bogotá", MEX: "Cidade do México", LIM: "Lima", LON: "Londres", PAR: "Paris", ROM: "Roma", MIL: "Milão", FRA: "Frankfurt", MUC: "Munique", YTO: "Toronto" };
+function km(a, b) { const R = 6371, r = x => x * Math.PI / 180; const dl = r(b[0] - a[0]), dn = r(b[1] - a[1]); const h = Math.sin(dl / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dn / 2) ** 2; return Math.round(2 * R * Math.asin(Math.sqrt(h))); }
+function hubsPerto(code) { const a = AEROPORTOS[code]; if (!a) return []; const lista = (HUBS_PAIS[a[2]] || []).filter(h => h !== code); return lista.map(h => ({ h, km: km([a[3], a[4]], HUB_COORD[h]) })).sort((x, y) => x.km - y.km); }
+// Link de pesquisa ao vivo na Aviasales (com o marker de parceiro).
+function linkAoVivo(o, d, ida, volta, adultos) {
+  const dm = iso => iso.slice(8, 10) + iso.slice(5, 7);
+  const path = `/search/${o}${dm(ida)}${d}${volta ? dm(volta) : ""}${Math.max(1, +adultos || 1)}`;
+  return "https://www.aviasales.com" + path + (TP_MARKER ? "?marker=" + encodeURIComponent(TP_MARKER) : "");
+}
+function cidade(code) { return (typeof NOMES_HUB !== "undefined" && NOMES_HUB[code]) || (AEROPORTOS[code] && AEROPORTOS[code][0]) || code; }
 // Hora local no aeroporto de chegada, a partir da partida (com fuso) + duração.
 function chegadaLocal(partidaISO, minutos, codigoDestino) {
   const t = new Date(partidaISO).getTime() + minutos * 60000;
@@ -45,7 +59,8 @@ async function tpPricesForDates(q) {
   if (!TP_TOKEN) throw Object.assign(new Error("Falta configurar TRAVELPAYOUTS_TOKEN no Vercel."), { code: "config" });
   const u = new URL("https://api.travelpayouts.com/aviasales/v3/prices_for_dates");
   Object.entries(q).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, String(v)); });
-  if (TP_MARKET) u.searchParams.set("market", TP_MARKET);
+  const mk = TP_MARKET || mercado(q.origin);
+  if (mk) u.searchParams.set("market", mk);
   u.searchParams.set("token", TP_TOKEN);
   const r = await fetch(u, { headers: { "Accept-Encoding": "gzip, deflate" } });
   const j = await r.json().catch(() => ({}));
@@ -132,6 +147,42 @@ async function pesquisar(input) {
   return itens.slice(0, 60);
 }
 
+/*
+ * Pesquisa com alternativas, para rotas com poucos preços guardados:
+ * 1) datas exatas; 2) datas próximas no(s) mesmo(s) mês(es); 3) a partir do grande aeroporto mais próximo.
+ * Devolve sempre o link de pesquisa ao vivo na Aviasales.
+ */
+async function pesquisarComAlternativas(input) {
+  const o = iata(input.flyFrom), d = iata(input.flyTo);
+  const ida = fromDMY(input.departureDate), volta = fromDMY(input.returnDate);
+  const aoVivo = (o && d && ida) ? linkAoVivo(o, d, ida, volta || (input.nights_in_dst_from != null ? addDays(ida, +input.nights_in_dst_from) : null), input.adults) : null;
+  let itens = await pesquisar(input);
+  if (itens.length) return { itineraries: itens, aoVivo };
+  // 2) datas próximas: mês inteiro de partida, estadia ±7 dias
+  const d1 = ida, d2 = fromDMY(input.departureDateTo) || ida;
+  if (d1) {
+    const solto = Object.assign({}, input, { departureDate: "01/" + d1.slice(5, 7) + "/" + d1.slice(0, 4), departureDateTo: null, departureDateFlexDays: 0, returnDateFlexDays: 0 });
+    const fimMes = new Date(Date.UTC(+d2.slice(0, 4), +d2.slice(5, 7), 0)).toISOString().slice(0, 10);
+    solto.departureDateTo = fimMes.split("-").reverse().join("/");
+    if (volta) { const n = daysDiff(d1, volta); solto.returnDate = null; solto.nights_in_dst_from = Math.max(1, n - 7); solto.nights_in_dst_to = n + 7; }
+    else if (input.nights_in_dst_from != null) { solto.nights_in_dst_from = Math.max(1, +input.nights_in_dst_from - 7); solto.nights_in_dst_to = +(input.nights_in_dst_to || input.nights_in_dst_from) + 7; }
+    itens = await pesquisar(solto);
+    if (itens.length) { itens.forEach(it => { it.approx = "datas"; }); return { itineraries: itens, aoVivo, aviso: { tipo: "datas", texto: `Não há preços guardados para as datas exatas. Mostramos as datas mais próximas, no mesmo mês, que têm preço conhecido.` } }; }
+  }
+  // 3) a partir do grande aeroporto mais próximo
+  for (const { h, km: dist } of hubsPerto(o).slice(0, 2)) {
+    if (dist > 1200) continue;
+    try {
+      const alt = await pesquisar(Object.assign({}, input, { flyFrom: h }));
+      if (alt.length) {
+        alt.forEach(it => { it.approx = "origem"; });
+        return { itineraries: alt, aoVivo, aviso: { tipo: "origem", hub: h, km: dist, texto: `Não há preços guardados a partir de ${cidade(o)}. Estes preços são a partir de ${NOMES_HUB[h] || h}, a cerca de ${dist} km. Some a ligação de ${cidade(o)} até lá, ou veja a pesquisa ao vivo, que inclui ${cidade(o)}.` } };
+      }
+    } catch { /* tenta o próximo */ }
+  }
+  return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Ainda não há preços guardados para esta rota. A pesquisa ao vivo na Aviasales mostra todos os voos disponíveis neste momento.` } };
+}
+
 /* ---------- Anthropic ---------- */
 async function claude({ system, messages, tools, rapido, maxTokens }) {
   if (!ANTHROPIC_KEY) throw Object.assign(new Error("Falta configurar ANTHROPIC_API_KEY no Vercel."), { code: "config" });
@@ -163,4 +214,4 @@ function limitar(req, max = 30, chave = "geral") {
 function responder(res, status, body) { res.setHeader("Cache-Control", "no-store"); res.status(status).json(body); }
 function erro(res, e) { const st = e.code === "input" ? 400 : e.code === "config" ? 500 : 502; responder(res, st, { error: e.message || "Erro", code: e.code || "erro" }); }
 
-module.exports = { pesquisar, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };
+module.exports = { pesquisar, pesquisarComAlternativas, linkAoVivo, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };

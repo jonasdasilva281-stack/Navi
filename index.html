@@ -428,6 +428,10 @@ h1,h2,h3,.price{font-family:var(--f-display)}
   .dchip{min-width:96px;padding:8px 10px}
   .extras>details{padding:0 14px}
 }
+.live-btn{display:inline-flex;width:auto;justify-self:start;margin-top:8px}
+.live-btn.inline{margin:0;padding:6px 12px;font-size:13px}
+.live-top{align-items:center;flex-wrap:wrap}
+.aviso-fonte .live-btn{margin-top:10px}
 /* ===== Conversa com a Navi ===== */
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .bar-toggle{justify-self:start;margin-top:4px;font:inherit;font-size:13px;font-weight:700;color:#cfe0f5;background:none;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 14px;cursor:pointer}
@@ -1126,7 +1130,9 @@ async function api(path, body){
   if(!r.ok) throw {code: r.status===429?"rate_limited": (j.code==="input"?"input":"tool_error"), message:j.error||"Erro no servidor"};
   return j;
 }
-const kiwi = input => api("precos",input).then(p=>Array.isArray(p&&p.itineraries)?p.itineraries:[]);
+let LIVE=null, AVISO=null;
+const kiwi = input => api("precos",input).then(p=>{ if(p&&p.aoVivo) LIVE=p.aoVivo; if(p&&p.aviso&&(!AVISO||AVISO.tipo==="vazio"||p.aviso.tipo==="origem")) AVISO=p.aviso; return Array.isArray(p&&p.itineraries)?p.itineraries:[]; });
+function liveBtn(text){ if(!LIVE) return null; const a=el("a","sel live-btn",(text||"Ver preços ao vivo na Aviasales")+" ↗"); a.href=LIVE; a.target="_blank"; a.rel="noopener"; return a; }
 const cheapestOf = l => l.slice().sort((a,b)=>a.price-b.price)[0];
 
 /* ---------- progresso ---------- */
@@ -1160,6 +1166,8 @@ let CTX={pax:1,bagsWanted:0};
 function priceSub(){ return `Total estimado com taxas · ${CTX.pax} pessoa${CTX.pax>1?"s":""} · confirme no site`; }
 function badges(it, infos){
   const w=el("div","badges"); const add=(t,c)=>w.append(el("span","b "+(c||""),t));
+  if(it.approx==="datas") add("Data próxima da pedida","warn");
+  if(it.approx==="origem") add(`Sai de ${(it.outbound.segments&&it.outbound.segments[0].fromCity)||it.outbound.from}`,"bad");
   if(it.baggage==null){ add(CTX.bagsWanted?"Bagagem: confirme no site":"Preço visto nas últimas 48 h","warn"); }
   const got=it.baggage?(+it.baggage.checkedBag||0):0;
   if(it.baggage==null){}
@@ -1471,7 +1479,7 @@ async function run(){
   }
   if(!mcp){ $("note").textContent="Abra esta página dentro do Claude para ver preços em tempo real."; return; }
   $("note").textContent="Preços da Aviasales (pesquisas das últimas 48 horas), com taxas incluídas.";
-  busy=true; $("go").disabled=true; $("go").textContent="A procurar…"; stopLive(); CURMAP=null; CURPICKS=null; if(agentCtl) agentCtl.abort();
+  busy=true; LIVE=null; AVISO=null; $("go").disabled=true; $("go").textContent="A procurar…"; stopLive(); CURMAP=null; CURPICKS=null; if(agentCtl) agentCtl.abort();
   showTab("procurar"); document.dispatchEvent(new CustomEvent("navi:start",{detail:{f}}));
   $("empty").hidden=true; $("inspire").hidden=true; const R=$("results"); R.replaceChildren(); R.hidden=false;
   $("steps").replaceChildren(); for(const k in STEPS) delete STEPS[k]; $("progress").hidden=false;
@@ -1516,7 +1524,7 @@ async function run(){
       done++; step("dates",`A testar datas… ${done} de ${windows.length} grupos de dias`,"run");
     }),4);
     if(!all.length){
-      clear(listHost); callout(listHost, err?"Não foi possível procurar":"Sem voos nestas datas", err?errText(err,KIWI):"Experimente alargar as datas de partida ou os dias de estadia.", err?"err":"", err?()=>{busy=false;run();}:null);
+      clear(listHost); callout(listHost, err?"Não foi possível procurar":"Sem preços guardados para esta rota", err?errText(err,KIWI):((AVISO&&AVISO.texto)||"Experimente alargar as datas de partida ou os dias de estadia."), err?"err":"", err?()=>{busy=false;run();}:null); const lb=liveBtn(); if(lb) listHost.append(lb);
       A.setState("Sem resultados"); step("dates","Sem datas encontradas","err"); document.dispatchEvent(new CustomEvent("navi:done",{detail:{f,cheapest:null,count:0,error:err?errText(err,KIWI):null}})); busy=false; $("go").disabled=false; $("go").textContent="Procurar"; return;
     }
     const combos={}; all.forEach(it=>{ const k=it.outbound.departureTime.slice(0,10)+"|"+(it.inbound?it.inbound.departureTime.slice(0,10):""); if(!combos[k]||it.price<combos[k].price) combos[k]=it; });
@@ -1554,13 +1562,15 @@ async function run(){
   const mainP=Promise.all([ kiwi(kiwiInput(f)), kiwi(kiwiInput(f,{sort:"duration"})).catch(()=>[]) ]).then(([byPrice,byDur])=>{
     addPool(byPrice); addPool(byDur);
     if(flexInfo) addPool(flexInfo.all);
-    if(!pool.length){ clear(listHost); callout(listHost,"Sem voos para estas datas","Experimente outras datas, o separador Calendário do mês, ou escolha a cidade da lista (com o código, ex.: CAC)."); step("main","Não encontrámos voos para estas datas","err"); return null; }
+    if(!pool.length){ clear(listHost); callout(listHost,"Sem preços guardados para esta rota",(AVISO&&AVISO.texto)||"Experimente outras datas ou o separador Calendário do mês."); const lb=liveBtn(); if(lb) listHost.append(lb); step("main","Não encontrámos voos para estas datas","err"); return null; }
     const P=CURPICKS; const cheap=P.cheap, fast=P.fast;
     setMapChips(sMap); drawRoute(sMap,cheap,"A mais barata");
     facts.maisBarata={preco:money(cheap.price),rota:cheap.outbound.route.join("→"),duracaoIda:dur(cheap.outbound.durationSeconds),mala:!!(cheap.baggage&&cheap.baggage.checkedBag>0)};
     facts.maisRapida={preco:money(fast.price),duracaoIda:dur(fast.outbound.durationSeconds)};
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
+    if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Preços a partir de outra cidade":"Datas aproximadas"), el("p",null,AVISO.texto)); const lb=liveBtn(AVISO.tipo==="origem"?`Ver voos de ${cityName(f.orig)} ao vivo na Aviasales`:"Ver as datas exatas ao vivo na Aviasales"); if(lb) cw.append(lb); listHost.before(cw); }
+    else if(LIVE&&!M.querySelector(".live-top")){ const w=el("p","incl live-top"); w.append(el("span",null,"Quer ver todas as companhias neste momento? ")); const lb=liveBtn("Pesquisa ao vivo na Aviasales"); lb.classList.add("inline"); w.append(lb); incl.after(w); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2043,9 +2053,11 @@ document.addEventListener("navi:done",async e=>{
       ncCtrl(ncChips([{t:"Sim, aceito 1 escala",primary:true,fn:()=>{ ncUser("Sim, aceito 1 escala"); NC.profile.stops="1"; $("stops").value="1"; run(); }},{t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }}]));
       return;
     }
-    await ncSay(d.error?`Não consegui procurar: ${d.error}`:"Não encontrei voos com estas condições. Quer alargar as datas, aceitar mais escalas ou tentar outro aeroporto?",300);
+    await ncSay(d.error?`Não consegui procurar: ${d.error}`:((AVISO&&AVISO.texto)||"Não encontrei voos com estas condições. Quer alargar as datas, aceitar mais escalas ou tentar outro aeroporto?"),300);
+    if(LIVE){ const lb=liveBtn(); await ncSay(lb,0); }
     ncCtrl(ncChips([{t:"Mudar datas",primary:true,fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }},{t:"Mudar escalas",fn:()=>{ ncUser("Mudar escalas"); NC.queue=["prefs","confirm"]; ncNext(); }},{t:"Recomeçar",fn:()=>ncStart()}])); return; }
   const c=d.cheapest, pool=(window.__VIEW&&window.__VIEW.pool)||[c];
+  if(AVISO&&AVISO.tipo!=="vazio"){ await ncSay(AVISO.texto,300); }
   const rec=ncProfilePick(pool)||c; const pr=NC.profile;
   await ncSay(`Comparei ${d.count} opções. A mais barata custa ${money(c.price)} no total, com taxas${CTX.bagsWanted?" e as malas":""}.`,400);
   // recomendação pelo perfil
