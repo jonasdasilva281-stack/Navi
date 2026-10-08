@@ -44,6 +44,7 @@ As chaves secretas **nunca** ficam no código: são postas no Vercel (passo 3).
 | `TRAVELPAYOUTS_TOKEN` | o token da Travelpayouts |
 | `TRAVELPAYOUTS_MARKER` | o seu marker de parceiro |
 | `ANTHROPIC_API_KEY` | a chave da Anthropic |
+| `TP_KIWI_P` | opcional: número do programa Kiwi.com na Travelpayouts, para os botões Kiwi.com darem comissão |
 | `TRAVELPAYOUTS_MARKET` | opcional: `br` para clientes no Brasil, `pt` para Portugal |
 | `ANTHROPIC_MODEL` | opcional: modelo do agente (por defeito `claude-sonnet-5-5`) |
 

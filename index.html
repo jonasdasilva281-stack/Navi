@@ -429,6 +429,7 @@ h1,h2,h3,.price{font-family:var(--f-display)}
   .extras>details{padding:0 14px}
 }
 .live-btn{display:inline-flex;width:auto;justify-self:start;margin-top:8px}
+.row.sites{gap:8px;margin-top:6px}
 .live-btn.inline{margin:0;padding:6px 12px;font-size:13px}
 .live-top{align-items:center;flex-wrap:wrap}
 .aviso-fonte .live-btn{margin-top:10px}
@@ -1130,7 +1131,24 @@ async function api(path, body){
   if(!r.ok) throw {code: r.status===429?"rate_limited": (j.code==="input"?"input":"tool_error"), message:j.error||"Erro no servidor"};
   return j;
 }
-let LIVE=null, AVISO=null;
+let LIVE=null, AVISO=null, TPCFG={marker:"",kiwiP:""};
+// Links para outros buscadores. O Kiwi.com passa pela Travelpayouts (comissão) quando TP_KIWI_P estiver configurado.
+function siteLinks(f,o,d){
+  const w=el("div","row sites"); const pax=Math.max(1,+f.ad||1); const ida=f.ida, volta=f.rt?f.volta:"";
+  const add=(t,u)=>w.append(buyLink(u,t,true));
+  const gq=`Flights from ${o||f.orig} to ${d||f.dest} on ${ida}${volta?" through "+volta:""}`;
+  if(o&&d){
+    let kiwi=`https://www.kiwi.com/pt/search/results/${o}/${d}/${ida}/${volta||"no-return"}?adults=${pax}&sortBy=price`;
+    if(TPCFG.kiwiP&&TPCFG.marker) kiwi=`https://tp.media/r?marker=${encodeURIComponent(TPCFG.marker)}&p=${encodeURIComponent(TPCFG.kiwiP)}&u=${encodeURIComponent(kiwi)}`;
+    add("Kiwi.com",kiwi);
+    const y=x=>x.slice(2,4)+x.slice(5,7)+x.slice(8,10);
+    add("Skyscanner",`https://www.skyscanner.pt/transporte/voos/${o.toLowerCase()}/${d.toLowerCase()}/${y(ida)}/${volta?y(volta)+"/":""}?adultsv2=${pax}`);
+    add("Momondo",`https://www.momondo.pt/flight-search/${o}-${d}/${ida}${volta?"/"+volta:""}/${pax}adults?sort=price_a`);
+    add("Kayak",`https://www.kayak.pt/flights/${o}-${d}/${ida}${volta?"/"+volta:""}/${pax}adults?sort=price_a`);
+  }
+  add("Google Flights","https://www.google.com/travel/flights?hl=pt-PT&q="+encodeURIComponent(gq));
+  return w;
+}
 const kiwi = input => api("precos",input).then(p=>{ if(p&&p.aoVivo) LIVE=p.aoVivo; if(p&&p.aviso&&(!AVISO||AVISO.tipo==="vazio"||p.aviso.tipo==="origem")) AVISO=p.aviso; return Array.isArray(p&&p.itineraries)?p.itineraries:[]; });
 function liveBtn(text){ if(!LIVE) return null; const a=el("a","sel live-btn",(text||"Ver preços ao vivo na Aviasales")+" ↗"); a.href=LIVE; a.target="_blank"; a.rel="noopener"; return a; }
 const cheapestOf = l => l.slice().sort((a,b)=>a.price-b.price)[0];
@@ -1525,7 +1543,7 @@ async function run(){
       done++; step("dates",`A testar datas… ${done} de ${windows.length} grupos de dias`,"run");
     }),4);
     if(!all.length){
-      clear(listHost); callout(listHost, err?"Não foi possível procurar":"Sem preços guardados para esta rota", err?errText(err,KIWI):((AVISO&&AVISO.texto)||"Experimente alargar as datas de partida ou os dias de estadia."), err?"err":"", err?()=>{busy=false;run();}:null); const lb=liveBtn(); if(lb) listHost.append(lb);
+      clear(listHost); callout(listHost, err?"Não foi possível procurar":"Sem preços guardados para esta rota", err?errText(err,KIWI):((AVISO&&AVISO.texto)||"Experimente alargar as datas de partida ou os dias de estadia."), err?"err":"", err?()=>{busy=false;run();}:null); const lb=liveBtn(); if(lb) listHost.append(lb); { const oc=code(f.orig), dc=code(f.dest); if(oc&&dc){ listHost.append(el("p","note","Ou compare noutros sites:"), siteLinks(f,oc,dc)); } }
       A.setState("Sem resultados"); step("dates","Sem datas encontradas","err"); document.dispatchEvent(new CustomEvent("navi:done",{detail:{f,cheapest:null,count:0,error:err?errText(err,KIWI):null}})); busy=false; $("go").disabled=false; $("go").textContent="Procurar"; return;
     }
     const combos={}; all.forEach(it=>{ const k=it.outbound.departureTime.slice(0,10)+"|"+(it.inbound?it.inbound.departureTime.slice(0,10):""); if(!combos[k]||it.price<combos[k].price) combos[k]=it; });
@@ -1554,7 +1572,7 @@ async function run(){
   const gVia=f.via?group(f.viadays?`Ficar ${f.viadays} dia${f.viadays>1?"s":""} em ${viaN}`:`Passar por ${viaN}`,"A cidade que escolheu pelo caminho"):null;
   const gAlt=f.alt?group("Cidades vizinhas","Sair ou chegar a outro aeroporto perto"):null;
   const gHid=f.hid?group(`Bilhetes com paragem em ${destN}`,"Comprar para mais longe e sair na paragem (com risco)"):null;
-  const gSites=group("Comparar sites","Aviasales, Google Flights e Skyscanner");
+  const gSites=group("Comparar sites","Aviasales, Kiwi.com, Skyscanner, Momondo, Kayak e Google Flights");
   const sVia=gVia&&gVia.sec, sAlt=gAlt&&gAlt.sec, sHid=gHid&&gHid.sec, sSites=gSites.sec;
   const setSum=(g,text)=>{ if(!g) return; const sm=g.t.querySelector("small"); if(sm) sm.textContent=text; };
 
@@ -1563,7 +1581,7 @@ async function run(){
   const mainP=Promise.all([ kiwi(kiwiInput(f)), kiwi(kiwiInput(f,{sort:"duration"})).catch(()=>[]) ]).then(([byPrice,byDur])=>{
     addPool(byPrice); addPool(byDur);
     if(flexInfo) addPool(flexInfo.all);
-    if(!pool.length){ clear(listHost); callout(listHost,"Sem preços guardados para esta rota",(AVISO&&AVISO.texto)||"Experimente outras datas ou o separador Calendário do mês."); const lb=liveBtn(); if(lb) listHost.append(lb); step("main","Não encontrámos voos para estas datas","err"); return null; }
+    if(!pool.length){ clear(listHost); callout(listHost,"Sem preços guardados para esta rota",(AVISO&&AVISO.texto)||"Experimente outras datas ou o separador Calendário do mês."); const lb=liveBtn(); if(lb) listHost.append(lb); { const oc=code(f.orig), dc=code(f.dest); if(oc&&dc){ listHost.append(el("p","note","Ou compare noutros sites:"), siteLinks(f,oc,dc)); } } step("main","Não encontrámos voos para estas datas","err"); return null; }
     const P=CURPICKS; const cheap=P.cheap, fast=P.fast;
     setMapChips(sMap); drawRoute(sMap,cheap,"A mais barata");
     facts.maisBarata={preco:money(cheap.price),rota:cheap.outbound.route.join("→"),duracaoIda:dur(cheap.outbound.durationSeconds),mala:!!(cheap.baggage&&cheap.baggage.checkedBag>0)};
@@ -1683,9 +1701,7 @@ async function run(){
     const row=(name,price,sub,url)=>{ const r=el("article","opt"); const l=el("div"); l.style.cssText="display:grid;gap:4px"; l.append(el("b",null,name)); l.append(el("span","note",sub)); const s=el("div","side"); s.append(el("div","price",price)); if(url) s.append(buyLink(url,"Abrir",true)); r.append(l,s); box.append(r); };
     if(cheapest) row("Aviasales",money(cheapest.price),`${priceSub()}. Compare também nos outros sites antes de comprar.`,cheapest.bookingUrl);
     step("ed","Links para Google Flights e Skyscanner prontos","ok");
-    const gq=`Flights from ${o||f.orig} to ${d||f.dest} on ${f.ida}${f.rt?" through "+f.volta:""}`;
-    const links=el("div","row"); links.append(buyLink("https://www.google.com/travel/flights?hl=pt-PT&q="+encodeURIComponent(gq),"Google Flights",true));
-    if(o&&d){ const y=s=>s.slice(2,4)+s.slice(5,7)+s.slice(8,10); links.append(buyLink(`https://www.skyscanner.pt/transporte/voos/${o.toLowerCase()}/${d.toLowerCase()}/${y(f.ida)}/${f.rt?y(f.volta)+"/":""}?adultsv2=${f.ad}`,"Skyscanner",true)); }
+    const links=siteLinks(f,o,d);
     sSites.append(box,links);
   })();
 
@@ -2143,7 +2159,7 @@ fetch("airports.json").then(r=>r.json()).then(d=>{ AIR=d; d.forEach(a=>{ AIRMAP[
 const startHash=(location.hash||"").slice(1); if(TABS.includes(startHash)) showTab(startHash);
 syncTripLines();
 mcp={}; renderAlerts();
-fetch("/api/estado").then(r=>r.json()).then(e=>{ AI=!!e.agente; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
+fetch("/api/estado").then(r=>r.json()).then(e=>{ AI=!!e.agente; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
