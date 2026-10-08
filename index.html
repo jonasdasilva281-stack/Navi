@@ -173,11 +173,27 @@ button.day{font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .cell{border:1px solid var(--line);border-radius:10px;min-height:68px;padding:6px 8px;display:grid;align-content:space-between;background:var(--card);font:inherit;color:var(--ink);text-align:left}
 .cell .n{font-size:13px;font-weight:700;color:var(--muted)}
 .cell .v{font-family:var(--f-display);font-weight:700;font-size:15px}
+.cell .v.q{font-family:var(--f-body);font-weight:700;font-size:12px;color:var(--sky)}
+.cell .st{font-size:11px;color:var(--muted)}
+button.cell:hover{border-color:var(--ink)}
 .cell.blank{border:0;background:none}
 .cell.past{opacity:.4}
 button.cell{cursor:pointer}
 .cell.h1{background:var(--heat1)} .cell.h2{background:var(--heat2)} .cell.h3{background:var(--heat3)}
 .cell.min{outline:2.5px solid var(--good);outline-offset:-2px}
+@media (max-width:560px){
+  .cal{min-width:0;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .cal .wd{font-size:10px;letter-spacing:0}
+  .cell{min-height:58px;padding:5px 4px;border-radius:8px}
+  .cell .n{font-size:11px}
+  .cell .v{font-size:11px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:clip}
+  .cell .v.q{font-size:10px;overflow:hidden;text-overflow:ellipsis}
+  .cell .st{font-size:9.5px}
+  .cell .v .cur{display:none}
+  .cell .v.q .ql{display:none}
+}
+.cell .v.q .qs{display:none}
+@media (max-width:560px){.cell .v.q .qs{display:inline}}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px}
 
@@ -434,6 +450,12 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .live-top{align-items:center;flex-wrap:wrap}
 .aviso-fonte .live-btn{margin-top:10px}
 .hand{position:fixed;inset:0;z-index:80;background:rgba(8,18,31,.55);display:grid;place-items:center;padding:16px;animation:rise .2s both}
+.wel-opts{display:grid;gap:10px}
+.wel-opt{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;text-align:left;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
+.wel-opt:hover,.wel-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
+.wel-opt .wi{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#0b1a2c;color:#fff;font-size:20px}
+.wel-opt b{display:block;font-size:16px}.wel-opt small{display:block;color:var(--muted,#5b6b7d);font-size:13px;margin-top:2px}
+.wel-opt.rec{border-color:#e4572e}
 .hand-box{width:min(440px,100%);background:var(--card);color:var(--ink);border-radius:20px;padding:22px;display:grid;gap:14px;box-shadow:0 30px 60px rgba(0,0,0,.3)}
 .hand-top{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:18px}
 .hand-box h3{font-family:var(--f-display);font-size:22px;margin:0;letter-spacing:-.02em}
@@ -836,7 +858,7 @@ body{padding-block:12px 64px}
       <p class="note">A origem, o destino, as pessoas e a bagagem vêm do separador Procurar. Toque num dia para procurar essa data.</p>
     </form>
     <section id="c-out">
-      <div class="sec-head"><h2>O mês inteiro de uma vez</h2><p>Cada dia mostra o preço mais baixo para partir nesse dia. Verde é mais barato, vermelho mais caro.</p></div>
+      <div class="sec-head"><h2>O mês inteiro de uma vez</h2><p>Cada dia mostra o preço mais baixo que temos guardado para partir nesse dia. Verde é mais barato, vermelho mais caro. Toque num dia para ver os voos.</p></div>
       <div class="cal-wrap"><div class="cal" id="cal"></div></div>
       <div class="legend"><span><i style="background:var(--heat1)"></i>mais barato</span><span><i style="background:var(--heat2)"></i>médio</span><span><i style="background:var(--heat3)"></i>mais caro</span></div>
       <p class="note" id="c-status"></p>
@@ -1766,6 +1788,11 @@ $("f").addEventListener("submit",e=>{ e.preventDefault(); run(); });
   for(let k=0;k<12;k++){ const d=new Date(t.getFullYear(),t.getMonth()+k,1); s.append(new Option(`${MESL[d.getMonth()]} de ${d.getFullYear()}`, isoOf(d).slice(0,7))); }
   s.value="2026-12";
 })();
+function calPick(iso){
+  const n=+$("c-nights").value; $("d-exact").checked=true; $("ida").value=iso; $("flex").value="0";
+  if(n>0){ $("t-rt").checked=true; $("volta").value=addDays(iso,n); } else { $("t-ow").checked=true; }
+  updateDateUI(); updateHeroPass(); showTab("procurar"); window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"}); run();
+}
 function drawCalendarSkeleton(ym, prices){
   const [y,m]=ym.split("-").map(Number); const first=new Date(y,m-1,1); const last=new Date(y,m,0).getDate();
   const cal=$("cal"); cal.replaceChildren();
@@ -1775,19 +1802,21 @@ function drawCalendarSkeleton(ym, prices){
   const q1=vals[Math.floor(vals.length/3)], q2=vals[Math.floor(vals.length*2/3)], min=vals[0];
   for(let d=1; d<=last; d++){
     const iso=`${ym}-${String(d).padStart(2,"0")}`; const p=prices&&prices[iso]; const past=daysUntil(iso)<1;
-    const c=el(p&&!past?"button":"div","cell"+(past?" past":"")); if(p&&!past) c.type="button";
+    const c=el(past?"div":"button","cell"+(past?" past":"")); if(!past) c.type="button";
     c.append(el("span","n",String(d)));
-    if(p&&!past){ c.append(el("span","v",money(p.price))); c.classList.add(p.price<=q1?"h1":p.price<=q2?"h2":"h3"); if(p.price===min) c.classList.add("min");
+    if(p&&!past){
+      { const v=el("span","v"); const m=money(p.price), k=m.replace(/^[^\d]*/,""); v.append(el("span","cur",m.slice(0,m.length-k.length)),k); c.append(v); }
+      if(p.inbound){ const st=Math.round((pdate(p.inbound.departureTime)-pdate(p.outbound.departureTime))/86400000); c.append(el("span","st",`${st} dias`)); }
+      c.classList.add(p.price<=q1?"h1":p.price<=q2?"h2":"h3"); if(p.price===min) c.classList.add("min");
       c.setAttribute("aria-label",`${dayLabel(iso)}: ${money(p.price)}. Procurar este dia.`);
-      c.onclick=()=>{ $("ida").value=iso; const n=+$("c-nights").value; if(n>0){ $("t-rt").checked=true; $("volta-f").hidden=false; $("volta").value=addDays(iso,n); } else { $("t-ow").checked=true; $("volta-f").hidden=true; } showTab("procurar"); run(); };
-    } else c.append(el("span","v", past?"":(prices?"—":"")));
+    } else if(!past){ { const q=el("span","v q"); if(prices){ q.append(el("span","ql","Procurar"),el("span","qs","Ver")); } c.append(q); } c.setAttribute("aria-label",`${dayLabel(iso)}: procurar voos neste dia.`); }
+    if(!past) c.onclick=()=>calPick(iso);
     cal.append(c);
   }
 }
 async function runCalendar(){
   const f=form(); CUR=f.cur; const ym=$("c-month").value; const n=+$("c-nights").value;
-  if(!mcp){ $("c-status").textContent="Abra esta página dentro do Claude para ver preços em tempo real."; return; }
-  $("c-go").disabled=true; $("c-go").textContent="A ver os preços…";
+  $("c-go").disabled=true; $("c-go").textContent="A ver os preços…"; AVISO=null;
   const [y,m]=ym.split("-").map(Number); const last=new Date(y,m,0).getDate();
   let start=1; const t=today(); if(y===t.getFullYear()&&m===t.getMonth()+1) start=Math.max(1,t.getDate()+1);
   const windows=[]; for(let d=start; d<=last; d+=4) windows.push([d,Math.min(d+3,last)]);
@@ -1797,13 +1826,22 @@ async function runCalendar(){
   await limitPool(windows.map(([a,b])=>async()=>{
     const from=`${ym}-${String(a).padStart(2,"0")}`, to=`${ym}-${String(b).padStart(2,"0")}`;
     const over={departureDate:dmy(from),departureDateTo:dmy(to)}; if(n>0){ over.nights_in_dst_from=n; over.nights_in_dst_to=n; }
-    try{ const list=await kiwi(kiwiInput(ow,over)); list.forEach(it=>{ const d=it.outbound.departureTime.slice(0,10); if(!prices[d]||it.price<prices[d].price) prices[d]=it; }); }
+    try{ const list=await kiwi(kiwiInput(ow,over)); list.forEach(it=>{ const d=it.outbound.departureTime.slice(0,10); if(d.slice(0,7)!==ym) return; if(!prices[d]||it.price<prices[d].price) prices[d]=it; }); }
     catch(e){ failed=e; }
     done++; $("c-status").textContent=`A procurar… ${done} de ${windows.length}`; drawCalendarSkeleton(ym,prices);
   }),3);
   const keys=Object.keys(prices);
-  if(!keys.length){ $("c-status").textContent= failed? errText(failed,KIWI) : "Não encontrámos voos neste mês."; }
-  else { const best=keys.sort((a,b)=>prices[a].price-prices[b].price)[0]; $("c-status").textContent=`Dia mais barato: ${dayLabel(best)}, ${money(prices[best].price)}${n?` (com regresso ${n} dias depois)`:""}. Os dias sem preço não têm voos encontrados.`; }
+  const st=$("c-status"); st.replaceChildren();
+  if(!keys.length){ st.textContent= failed? errText(failed,KIWI) : "Ainda não temos preços guardados para este mês. Toque num dia para procurar voos nessa data."; }
+  else {
+    const best=keys.sort((a,b)=>prices[a].price-prices[b].price)[0]; const bp=prices[best];
+    const estadia=bp.inbound?Math.round((pdate(bp.inbound.departureTime)-pdate(bp.outbound.departureTime))/86400000):null;
+    const de=bp.outbound.segments&&bp.outbound.segments[0]&&bp.outbound.segments[0].fromCity;
+    const outra=AVISO&&AVISO.tipo==="origem";
+    st.append(el("b",null,`Dia mais barato: ${dayLabel(best)}, ${money(bp.price)}`), document.createTextNode(`${estadia?` (ida e volta, estadia de ${estadia} dias)`:""}${outra&&de?`, a partir de ${de}`:""}. `));
+    st.append(document.createTextNode(outra?`A partir de ${cityName(f.orig)} ainda não temos preços guardados, por isso mostramos a cidade próxima com preços. `:""));
+    st.append(document.createTextNode("Nos outros dias ainda não temos preço guardado: toque num deles para procurar voos nessa data."));
+  }
   $("c-go").disabled=false; $("c-go").textContent="Ver o preço de cada dia";
 }
 $("fc").addEventListener("submit",e=>{ e.preventDefault(); runCalendar(); });
@@ -2149,7 +2187,30 @@ document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
   $("swap").onclick=()=>{ const o=$("orig").value; $("orig").value=$("dest").value; $("dest").value=o; updateHeroPass(); };
   new MutationObserver(()=>{ const t=$("note").textContent.trim(); if(!$("f").hidden||!t||/^(Preços da Aviasales)/.test(t)) return; ncSay(t,0); }).observe($("note"),{childList:true,characterData:true,subtree:true});
   ncStart();
+  boasVindas();
 })();
+
+/* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */
+function boasVindas(){
+  let visto=false; try{ visto=sessionStorage.getItem("navi-bv")==="1"; }catch{}
+  if(visto) return;
+  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","wel-t");
+  const box=el("div","hand-box");
+  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
+  const h=el("h3",null,"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
+  box.append(el("p",null,"Como prefere encontrar o seu voo?"));
+  const opt=(cls,icone,tit,sub)=>{ const b=el("button","wel-opt"+(cls?" "+cls:"")); b.type="button"; const i=el("span","wi",icone); i.setAttribute("aria-hidden","true"); const t=el("span"); t.append(el("b",null,tit),el("small",null,sub)); b.append(i,t); return b; };
+  const bChat=opt("rec","💬","Falar com a Navi","Respondo a umas perguntas rápidas e a Navi encontra a melhor opção para si.");
+  const bBar=opt("","🔎","Pesquisar sozinho","Preencho origem, destino e datas na barra de pesquisa.");
+  const opts=el("div","wel-opts"); opts.append(bChat,bBar); box.append(opts);
+  ov.append(box); document.body.append(ov);
+  const fechar=()=>{ try{ sessionStorage.setItem("navi-bv","1"); }catch{} ov.remove(); document.removeEventListener("keydown",esc); };
+  const esc=e=>{ if(e.key==="Escape") fechar(); };
+  document.addEventListener("keydown",esc);
+  bChat.onclick=()=>{ fechar(); $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); };
+  bBar.onclick=()=>{ fechar(); if($("f").hidden) $("bar-toggle").click(); $("f").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); setTimeout(()=>{ const o=$("orig"); o&&o.focus(); },350); };
+  bChat.focus();
+}
 
 /* ---------- arranque ---------- */
 /* ---------- contagem decrescente ---------- */
