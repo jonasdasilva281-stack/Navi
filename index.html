@@ -465,6 +465,13 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .navi-fab svg{width:36px;height:36px;flex:none}
 .navi-fab:hover{transform:translateY(-2px)}
 .navi-fab[hidden]{display:none}
+.hand.wel{background:#0b1a2c center/cover no-repeat;transition:background-image .4s}
+.hand.wel::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,18,31,.25) 0%,rgba(8,18,31,.15) 40%,rgba(8,18,31,.55) 100%);pointer-events:none}
+.hand.wel .hand-box{position:relative;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.wel-tag{position:absolute;left:0;right:0;top:calc(28px + env(safe-area-inset-top));text-align:center;color:#fff;font-family:var(--f-display);font-weight:600;font-size:clamp(22px,4.5vw,34px);letter-spacing:-.02em;text-shadow:0 2px 18px rgba(0,0,0,.45);padding:0 20px;pointer-events:none}
+.wel-tag em{font-family:var(--f-serif);font-style:italic;font-weight:400;color:#ffb39e}
+.wel-cred{position:absolute;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;color:rgba(255,255,255,.75)}
+@media (max-height:640px){.wel-tag{display:none}}
 .wel-opts{display:grid;gap:10px}
 .wel-opt{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;text-align:left;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
 .wel-opt:hover,.wel-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
@@ -2253,7 +2260,14 @@ function roboDeLado(){
 
 /* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */
 function boasVindas(){
-  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","wel-t");
+  const ov=el("div","hand wel"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","wel-t");
+  // Foto de fundo (Unsplash, licença gratuita). Se não carregar, fica o fundo azul da marca.
+  const FOTOS=["https://images.unsplash.com/photo-1436491865332-7a61a109cc05","https://images.unsplash.com/photo-1507525428034-b723cf961d3e"];
+  const w=Math.min(2000,Math.round(Math.max(innerWidth,innerHeight)*(devicePixelRatio>1?1.5:1)));
+  const foto=FOTOS[Math.floor(Math.random()*FOTOS.length)]+`?auto=format&fit=crop&w=${w}&q=70`;
+  const im=new Image(); im.onload=()=>{ ov.style.backgroundImage=`url("${foto}")`; }; im.src=foto;
+  const tag=el("p","wel-tag"); tag.innerHTML='A sua próxima viagem <em>começa aqui</em>.'; tag.setAttribute("aria-hidden","true");
+  ov.append(tag, el("span","wel-cred","Foto: Unsplash"));
   const box=el("div","hand-box");
   const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
   const h=el("h3",null,"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
