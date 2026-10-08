@@ -3,7 +3,7 @@
 const AEROPORTOS = require("./_aeroportos.json"); // IATA -> [cidade, fuso horário]
 
 const TP_TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "";
-const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "";
+const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "787293"; // marker de parceiro (público)
 const TP_MARKET = process.env.TRAVELPAYOUTS_MARKET || ""; // ex.: "br" ou "pt" (opcional)
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
 const MODELO = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
