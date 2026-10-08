@@ -807,7 +807,7 @@ body{padding-block:12px 64px}
 
   <!-- ===================== PROCURAR ===================== -->
   <div class="panel" id="p-procurar" role="tabpanel" aria-labelledby="tab-procurar">
-    <section class="nchat" id="nchat" aria-label="Conversa com a Navi">
+    <section class="nchat" id="nchat" aria-label="Conversa com a Navi" hidden>
       <div class="nc-head">
         <svg class="nc-ava" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 12.5L45.5 46L32 38.6L18.5 46Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g><g fill="#ffffff" fill-opacity=".35"><circle cx="15.5" cy="48.5" r="2.2"/><circle cx="10.5" cy="53.5" r="1.7"/></g></svg>
         <div class="nc-who"><b>Navi</b><small><i aria-hidden="true"></i>O seu agente de voos</small></div>
@@ -1222,8 +1222,8 @@ function siteLinks(f,o,d){
 const kiwi = input => api("precos",input).then(p=>{ if(p&&p.aoVivo) LIVE=p.aoVivo; if(p&&p.aviso&&(!AVISO||AVISO.tipo==="vazio"||p.aviso.tipo==="origem")) AVISO=p.aviso; return Array.isArray(p&&p.itineraries)?p.itineraries:[]; });
 function noResultsActions(host){
   const w=el("div","row sites");
-  const b1=el("button","btn","Mudar datas"); b1.type="button"; b1.onclick=()=>{ ncUser&&ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth"}); };
-  const b2=el("button","btn","Mudar escalas"); b2.type="button"; b2.onclick=()=>{ ncUser&&ncUser("Mudar escalas"); NC.queue=["prefs","confirm"]; ncNext(); $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth"}); };
+  const b1=el("button","btn","Mudar datas"); b1.type="button"; b1.onclick=()=>{ ncUser&&ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); abrirRobo(); };
+  const b2=el("button","btn","Mudar escalas"); b2.type="button"; b2.onclick=()=>{ ncUser&&ncUser("Mudar escalas"); NC.queue=["prefs","confirm"]; ncNext(); abrirRobo(); };
   w.append(b1,b2); host.append(w);
 }
 /* ---------- passagem para o pagamento no parceiro ---------- */
@@ -2264,7 +2264,7 @@ function boasVindas(){
   const opts=el("div","wel-opts"); opts.append(bChat,bBar); box.append(opts);
   ov.append(box); document.body.append(ov);
   const fechar=()=>{ ov.remove(); document.removeEventListener("keydown",esc); };
-  const esc=e=>{ if(e.key==="Escape") fechar(); };
+  const esc=e=>{ if(e.key==="Escape"){ fechar(); abrirRobo(); } };
   document.addEventListener("keydown",esc);
   bChat.onclick=()=>{ fechar(); abrirRobo(); };
   bBar.onclick=()=>{ fechar(); roboDeLado(); };
