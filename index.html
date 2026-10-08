@@ -979,12 +979,17 @@ const ALIAS={"lisboa":["LIS"],"porto":["OPO"],"faro":["FAO"],"funchal":["FNC"],"
  "cidade do mexico":["MEX"],"cancun":["CUN"],"havana":["HAV"],"cidade do panama":["PTY"],"montevideu":["MVD"],"assuncao":["ASU"],"bogota":["BOG"],"buenos aires":["EZE","AEP"],"santiago do chile":["SCL"],
  "joanesburgo":["JNB"],"cidade do cabo":["CPT"],"luanda":["LAD"],"maputo":["MPM"],"praia":["RAI"],"cabo verde":["RAI","SID","BVC"],"sao tome":["TMS"],"bissau":["OXB"],"cairo":["CAI"],"marraquexe":["RAK"],"casablanca":["CMN"],
  "toquio":["HND","NRT"],"pequim":["PEK","PKX"],"xangai":["PVG","SHA"],"seul":["ICN"],"singapura":["SIN"],"banguecoque":["BKK"],"dubai":["DXB"],"doha":["DOH"],"nova deli":["DEL"],"macau":["MFM"],"hong kong":["HKG"]};
-const PTNAME={}; Object.entries(ALIAS).forEach(([k,v])=>{ const nice=k.replace(/\b\w/g,c=>c.toUpperCase()).replace("Sao ","São ").replace("Acores","Açores").replace("Foz Do Iguacu","Foz do Iguaçu").replace("Florianopolis","Florianópolis").replace("Brasilia","Brasília").replace("Belem","Belém").replace("Maceio","Maceió").replace("Joao ","João ").replace("Goiania","Goiânia").replace("Vitoria","Vitória").replace("Cuiaba","Cuiabá").replace("Luis","Luís").replace("Maringa","Maringá").replace("Chapeco","Chapecó").replace("Uberlandia","Uberlândia").replace("Ribeirao Preto","Ribeirão Preto").replace("Ilheus","Ilhéus").replace("Milao","Milão").replace("Amesterdao","Amesterdão").replace("Varsovia","Varsóvia").replace("Napoles","Nápoles").replace("Florenca","Florença").replace("Colonia","Colónia").replace("Mexico","México").replace("Panama","Panamá").replace("Assuncao","Assunção").replace("Bogota","Bogotá").replace("Tome","Tomé").replace("Marraquexe","Marraquexe").replace("Toquio","Tóquio").replace("Nova Deli","Nova Deli"); v.forEach(c=>{ if(!PTNAME[c] && !["nova york","madeira","cabo verde","acores"].includes(k)) PTNAME[c]=nice; }); });
+Object.assign(ALIAS,{"maldivas":["MLE"],"male":["MLE"],"bali":["DPS"],"denpasar":["DPS"],"tailandia":["BKK","HKT"],"phuket":["HKT"],"mauricia":["MRU"],"ilhas mauricias":["MRU"],"seychelles":["SEZ"],"zanzibar":["ZNZ"],"punta cana":["PUJ"],"republica dominicana":["PUJ","SDQ"],"cuba":["HAV","VRA"],"aruba":["AUA"],"curacao":["CUR"],"jamaica":["MBJ","KIN"],"orlando":["MCO"],"miami":["MIA"],"los angeles":["LAX"],"las vegas":["LAS"],"sao francisco":["SFO"],"toronto":["YYZ"],"montreal":["YUL"],"tenerife":["TFS","TFN"],"canarias":["LPA","TFS"],"gran canaria":["LPA"],"ibiza":["IBZ"],"maiorca":["PMI"],"palma de maiorca":["PMI"],"creta":["HER"],"santorini":["JTR"],"mykonos":["JMK"],"chipre":["LCA","PFO"],"malta":["MLA"],"islandia":["KEF"],"reiquiavique":["KEF"],"egito":["CAI","HRG","SSH"],"marrocos":["RAK","CMN"],"tunisia":["TUN"],"sri lanka":["CMB"],"vietname":["SGN","HAN"],"japao":["HND","NRT"],"coreia do sul":["ICN"],"china":["PEK","PVG"],"india":["DEL","BOM"],"australia":["SYD","MEL"],"nova zelandia":["AKL"],"sydney":["SYD"],"madrid":["MAD"],"barcelona":["BCN"],"frankfurt":["FRA"],"dublin":["DUB"],"budapeste":["BUD"],"cracovia":["KRK"],"oslo":["OSL"],"helsinquia":["HEL"],"lima":["LIM"],"cusco":["CUZ"],"bariloche":["BRC"],"fernando de noronha":["FEN"],"salvador":["SSA"],"recife":["REC"],"fortaleza":["FOR"],"curitiba":["CWB"]});
+const PTNAME={}; Object.entries(ALIAS).forEach(([k,v])=>{ const nice=k.replace(/\b\w/g,c=>c.toUpperCase()).replace("Sao ","São ").replace("Acores","Açores").replace("Foz Do Iguacu","Foz do Iguaçu").replace("Florianopolis","Florianópolis").replace("Brasilia","Brasília").replace("Belem","Belém").replace("Maceio","Maceió").replace("Joao ","João ").replace("Goiania","Goiânia").replace("Vitoria","Vitória").replace("Cuiaba","Cuiabá").replace("Luis","Luís").replace("Maringa","Maringá").replace("Chapeco","Chapecó").replace("Uberlandia","Uberlândia").replace("Ribeirao Preto","Ribeirão Preto").replace("Ilheus","Ilhéus").replace("Milao","Milão").replace("Amesterdao","Amesterdão").replace("Varsovia","Varsóvia").replace("Napoles","Nápoles").replace("Florenca","Florença").replace("Colonia","Colónia").replace("Mexico","México").replace("Panama","Panamá").replace("Assuncao","Assunção").replace("Bogota","Bogotá").replace("Tome","Tomé").replace("Marraquexe","Marraquexe").replace("Toquio","Tóquio").replace("Nova Deli","Nova Deli"); v.forEach(c=>{ if(!PTNAME[c] && !["nova york","madeira","cabo verde","acores","tailandia","republica dominicana","cuba","jamaica","canarias","chipre","islandia","egito","marrocos","tunisia","sri lanka","vietname","japao","coreia do sul","china","india","australia","nova zelandia","ilhas mauricias","denpasar"].includes(k)) PTNAME[c]=nice; }); });
 Object.assign(PTNAME,{VCP:"Campinas",BGY:"Bérgamo (Milão)",CRL:"Charleroi (Bruxelas)",EWR:"Newark (Nova Iorque)",LTN:"Luton (Londres)",STN:"Stansted (Londres)"});
 const MAJOR=new Set("LIS OPO FAO FNC PDL MAD BCN CDG ORY LHR LGW FCO MXP FRA MUC AMS BRU ZRH GVA VIE DUB CPH ARN OSL HEL WAW PRG BUD ATH IST BER JFK EWR MIA MCO FLL LAX SFO ORD ATL BOS IAD DFW IAH YYZ YUL MEX CUN GRU CGH VCP GIG SDU BSB CNF SSA REC FOR FLN POA CWB IGU NAT BEL MAO EZE AEP SCL LIM BOG MVD ASU PTY UIO DXB DOH CAI JNB CPT LAD MPM RAI CMN RAK HND NRT ICN PEK PVG HKG SIN BKK DEL SYD".split(" "));
 let DN=null; try{ DN=new Intl.DisplayNames(["pt-PT"],{type:"region"}); }catch{}
 const countryName=c=>{ try{ return DN?DN.of(c):c; }catch{ return c; } };
 function norm(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim(); }
+// distância de edição com troca de letras vizinhas (Damerau, versão simples)
+function typoDist(a,b){ const m=a.length,n=b.length; if(Math.abs(m-n)>3) return 9; const d=[]; for(let i=0;i<=m;i++){ d[i]=[i]; } for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){ const c=a[i-1]===b[j-1]?0:1; d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c); if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1); }
+  return d[m][n]; }
 function suggest(q){
   if(!AIR) return [];
   const n=norm(q).replace(/\s*\([a-z]{3}\)\s*$/,""); if(n.length<2) return [];
@@ -992,7 +997,23 @@ function suggest(q){
   if(n.length===3) add(n.toUpperCase(),1000);
   for(const k in ALIAS) if(k.startsWith(n)) ALIAS[k].forEach((c,i)=>add(c,900-i*5));
   for(const a of AIR){ const c=norm(a[2]); let s=0; if(c.startsWith(n)) s=500; else if(c.includes(n)) s=200; else if(norm(a[1]).includes(n)) s=100; if(s) add(a[0], s+(MAJOR.has(a[0])?150:0)+(a[6]===2?40:0)); }
+  // país (ex.: "maldivas", "tailandia"): mostra os aeroportos principais desse país
+  if(n.length>=4) for(const a of AIR){ if(a[6]!==2) continue; const cn=norm(countryName(a[3])); if(cn.startsWith(n)) add(a[0], 80+(MAJOR.has(a[0])?150:0)); }
+  // erros de escrita (ex.: "maldvias", "lsiboa"): procura nomes parecidos
+  if(!sc.size && n.length>=4){
+    const lim=n.length>=7?2:1; const dist=w=>Math.min(typoDist(n,w), typoDist(n,w.slice(0,n.length))+0.5);
+    for(const k in ALIAS){ const d=dist(k); if(d<=lim) ALIAS[k].forEach((c,i)=>add(c,700-d*200-i*5)); }
+    if(!sc.size) for(const a of AIR){ if(a[6]!==2 && !MAJOR.has(a[0])) continue; const d=Math.min(dist(norm(a[2])),dist(norm(countryName(a[3])))); if(d<=lim) add(a[0], 300-d*100+(MAJOR.has(a[0])?150:0)); }
+  }
   return [...sc.entries()].sort((x,y)=>y[1]-x[1]).slice(0,8).map(([c])=>{ const a=AIRMAP[c]; return {iata:c, city:PTNAME[c]||a[2]||a[1], name:a[1], country:countryName(a[3])}; });
+}
+// Converte texto livre ("lisboa", "cascavel pr") no aeroporto mais provável: "Lisboa (LIS)".
+function resolveAirport(v){
+  v=String(v||"").trim(); if(!v) return ""; if(code(v)) return v;
+  const s=suggest(v)[0]; return s?`${s.city} (${s.iata})`:"";
+}
+function fixPlaces(){
+  ["orig","dest"].forEach(id=>{ const i=$(id); if(i&&i.value.trim()&&!code(i.value)){ const r=resolveAirport(i.value); if(r) i.value=r; } });
 }
 function attachSuggest(input){
   const wrap=el("div","sug-wrap"); input.parentNode.insertBefore(wrap,input); wrap.append(input);
@@ -1012,7 +1033,7 @@ function attachSuggest(input){
   input.addEventListener("keydown",e=>{
     if(box.hidden) return;
     if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); active=(active+(e.key==="ArrowDown"?1:-1)+items.length)%items.length; [...box.children].forEach((li,i)=>li.setAttribute("aria-selected",String(i===active))); input.setAttribute("aria-activedescendant",box.id+"-"+active); box.children[active].scrollIntoView({block:"nearest"}); }
-    else if(e.key==="Enter"&&active>=0){ e.preventDefault(); choose(items[active]); }
+    else if(e.key==="Enter"&&items.length){ e.preventDefault(); choose(items[active>=0?active:0]); }
     else if(e.key==="Escape") close();
   });
   input.addEventListener("blur",()=>{ setTimeout(close,150); if(!code(input.value)&&input.value.trim()){ const s=suggest(input.value)[0]; if(s && norm(s.city)===norm(input.value)) input.value=`${s.city} (${s.iata})`; } });
@@ -1566,8 +1587,9 @@ function filterBlock(parent, pool){
 /* ---------- pesquisa principal ---------- */
 async function run(){
   if(busy) return;
-  const f=form(); CUR=f.cur;
+  fixPlaces(); const f=form(); CUR=f.cur;
   if(!f.orig||!f.dest){ $("note").textContent="Escreva de onde sai e para onde vai."; return; }
+  if(!code(f.orig)||!code(f.dest)){ $("note").textContent=`Não encontrei ${!code(f.orig)?"a cidade de partida":"o destino"}. Escreva o nome da cidade e escolha-a na lista que aparece.`; return; }
   if(f.mode==="flex"){
     if(!f.wFrom||!f.wTo||daysUntil(f.wFrom)<1){ $("note").textContent="Escolha datas de partida que ainda não tenham passado."; return; }
     if(f.wTo<f.wFrom){ $("note").textContent="A data \"Partir até\" tem de ser igual ou depois de \"Partir a partir de\"."; return; }
@@ -1831,6 +1853,7 @@ function drawCalendarSkeleton(ym, prices){
   }
 }
 async function runCalendar(){
+  fixPlaces();
   const f=form(); CUR=f.cur; const ym=$("c-month").value; const n=+$("c-nights").value;
   $("c-go").disabled=true; $("c-go").textContent="A ver os preços…"; AVISO=null;
   const [y,m]=ym.split("-").map(Number); const last=new Date(y,m,0).getDate();
@@ -1874,6 +1897,7 @@ const REGIONS={
   caraibas:[["CUN","Cancún"],["PUJ","Punta Cana"],["HAV","Havana"],["SJU","San Juan"],["AUA","Aruba"],["CUR","Curaçau"],["PTY","Cidade do Panamá"]]
 };
 async function runExplore(){
+  fixPlaces();
   const f=tripF(); CUR=f.cur; CTX={pax:f.ad+f.ch, bagsWanted:f.bag*(f.ad+f.ch)}; const reg=$("e-region").value; const flex=+$("e-flex").value; const list=$("e-list");
   if(!mcp){ list.replaceChildren(); callout(list,"Sem ligação","Abra esta página dentro do Claude para ver preços em tempo real.","err"); return; }
   if(!f.ida||daysUntil(f.ida)<0){ list.replaceChildren(); callout(list,"Escolha uma data","No separador Procurar, escolha uma data de ida que ainda não tenha passado."); return; }
@@ -1976,7 +2000,7 @@ $("fa").addEventListener("submit",async e=>{
 const NC={ body:null, busy:false, ctrls:[], awaiting:null };
 function ncScroll(){ const b=NC.body; b.scrollTop=b.scrollHeight; }
 function ncRow(who){ const r=el("div","nm "+who); NC.body.append(r); return r; }
-function ncLock(){ NC.ctrls.forEach(c=>c.remove()); NC.ctrls=[]; NC.awaiting=null; }
+function ncLock(){ const old=NC.ctrls; NC.ctrls=[]; old.forEach(c=>{ if(c.isConnected) try{ c.remove(); }catch{} }); NC.ctrls=[]; NC.awaiting=null; }
 function ncUser(text){ ncLock(); const r=ncRow("me"); r.append(el("div","nb",text)); ncScroll(); }
 function ncTyping(ms){ return new Promise(res=>{ if(REDUCED||!ms){ res(); return; } const r=ncRow("bot typing"); const b=el("div","nb"); b.append(el("i"),el("i"),el("i")); r.append(b); ncScroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
 async function ncSay(text, ms){ await ncTyping(ms==null?520:ms); const r=ncRow("bot"); const b=el("div","nb"); if(typeof text==="string") b.textContent=text; else b.append(text); r.append(b); ncScroll(); return b; }
@@ -1995,9 +2019,9 @@ function ncAskCity(kind){
     const chips=isO?(main.value?[{t:main.value,fn:()=>accept(main.value)}]:[]):NAVI_POP_DEST.filter(x=>x!==$("orig").value).slice(0,5).map(x=>({t:cityName(x),fn:()=>accept(x)}));
     if(chips.length) box.append(ncChips(chips));
     ncCtrl(box); attachSuggest(inp); setTimeout(()=>{ try{ inp.focus({preventScroll:true}); inp.select(); }catch{} },50);
-    function accept(v){ v=String(v||"").trim(); if(!v){ inp.focus(); return; } main.value=v; main.dispatchEvent(new Event("change")); ncUser(cityName(v)+(code(v)?` (${code(v)})`:"")); ncNext(); }
+    function accept(v){ v=String(v||"").trim(); if(!v){ inp.focus(); return; } if(!code(v)){ const r=resolveAirport(v); if(!r){ ncSay(`Não encontrei "${v}". Escreva o nome da cidade e escolha-a na lista que aparece.`,0); inp.focus(); return; } v=r; } main.value=v; main.dispatchEvent(new Event("change")); ncUser(cityName(v)+(code(v)?` (${code(v)})`:"")); ncNext(); }
     inp.addEventListener("change",()=>{ if(code(inp.value)) accept(inp.value); });
-    inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&inp.getAttribute("aria-expanded")!=="true"){ e.preventDefault(); accept(inp.value); } });
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.defaultPrevented&&inp.getAttribute("aria-expanded")!=="true"){ e.preventDefault(); accept(inp.value); } });
     go.onclick=()=>accept(inp.value);
     NC.awaiting=v=>accept(v);
   })();
