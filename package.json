@@ -1,0 +1,7 @@
+{
+  "name": "navi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Navi — o seu agente de voos baratos",
+  "engines": { "node": ">=18" }
+}
