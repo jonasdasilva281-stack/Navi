@@ -9,6 +9,7 @@ A pasta tem tudo o que a Navi precisa para funcionar sozinha, fora do Claude:
 | `api/agente.js` | O agente Navi: testa aeroportos vizinhos, datas e bilhetes separados (usa a API da Anthropic) |
 | `api/interpretar.js` | Percebe frases como "Cascavel para Lisboa em dezembro, 6 semanas" |
 | `api/vizinhos.js` | Sugere aeroportos próximos |
+| `api/estado.js` | Diz à app se o agente está ligado (ou seja, se existe `ANTHROPIC_API_KEY`) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Tornam a Navi instalável no telemóvel, com ícone e ecrã inteiro |
 
 As chaves secretas **nunca** ficam no código: são postas no Vercel (passo 3).
@@ -47,6 +48,13 @@ As chaves secretas **nunca** ficam no código: são postas no Vercel (passo 3).
 | `ANTHROPIC_MODEL` | opcional: modelo do agente (por defeito `claude-sonnet-5-5`) |
 
 3. Carregue em **Deploy**. Ao fim de um minuto fica com um endereço do tipo `navi-xxxx.vercel.app`.
+
+### Ligar o agente mais tarde
+A Navi funciona sem a chave da Anthropic: tem preços, datas flexíveis, conversa por botões e recomendação pelo perfil.
+Quando quiser ligar o agente (aeroportos vizinhos, frases livres e outras estratégias de preço):
+1. Vercel → projeto **navi** → **Settings → Environment Variables** → adicione `ANTHROPIC_API_KEY`.
+2. **Deployments** → nos três pontos da última publicação → **Redeploy**.
+O agente aparece sozinho, sem mudar código.
 
 ## 4. Domínio próprio (opcional)
 

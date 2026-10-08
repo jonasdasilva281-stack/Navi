@@ -883,6 +883,7 @@ const DOW = ["dom","seg","ter","qua","qui","sex","sáb"];
 const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const MESL = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 let mcp = null, sample = null, db = null, uid = null, busy = false;
+let AI = false; // muda para true quando a chave da Anthropic estiver no Vercel
 let lastSearch = null; // {f, cheapest}
 
 /* ---------- utilidades ---------- */
@@ -1481,7 +1482,7 @@ async function run(){
   // ----- estrutura da página de resultados -----
   const head=el("div","res-head"); const h=el("h2",null,`${origN} → ${destN}`); const sub=el("p",null,""); head.append(h,sub); R.append(head);
   const layout=el("div","res-layout"); const side=el("aside"); side.setAttribute("aria-label","Filtros"); const M=el("div","res-main"); layout.append(side,M); R.append(layout);
-  const A=agentCard(M);
+  const A=agentCard(M); if(!AI) A.c.hidden=true;
   const sDates=el("section"); sDates.hidden=true; M.append(sDates);
   const listHost=el("section"); M.append(listHost); listHost.append(loader());
   const incl=el("p","incl"); incl.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>'; incl.append(el("span",null,`Preços totais estimados, com taxas, para todos os passageiros, encontrados nas últimas 48 horas. A bagagem incluída e o preço final confirmam-se no site de compra, antes de pagar.`)); M.append(incl);
@@ -1538,7 +1539,7 @@ async function run(){
   f.alt? step("alt","A ver aeroportos em cidades vizinhas…","run") : step("alt","Cidades vizinhas desligado","off");
   f.hid? step("hid",`A procurar bilhetes para mais longe com paragem em ${destN}…`,"run") : step("hid","Bilhetes com paragem desligado","off");
   step("ed","A preparar a comparação de sites…","run");
-  step("adv","Agente de preços","run");
+  if(AI) step("adv","Agente de preços","run");
 
   const gMap=group("Mapa da viagem","O caminho de cada opção"); const sMap=(()=>{ gMap.sec.querySelector(".loading").remove(); const chips=el("div","filters"); const box=el("div","map"); const cap=el("p","note"); box.append(loader()); gMap.sec.append(chips,box,cap); return {s:gMap.sec,chips,box,cap}; })(); CURMAP=sMap;
   const gVia=f.via?group(f.viadays?`Ficar ${f.viadays} dia${f.viadays>1?"s":""} em ${viaN}`:`Passar por ${viaN}`,"A cidade que escolheu pelo caminho"):null;
@@ -1619,7 +1620,7 @@ async function run(){
     }catch(e){ clear(sVia); callout(sVia,"Não foi possível procurar",errText(e,KIWI),"err"); step("via","Pesquisa pela cidade falhou","err"); }
   })();
 
-  const extra=await nearbyAndBeyond(origN,destN,destCode,f.alt,f.hid);
+  const extra=await nearbyAndBeyond(origN,destN,destCode,f.alt&&AI,f.hid&&AI);
 
   const altP=!f.alt?Promise.resolve():(async()=>{
     const tries=[...extra.alt.partida.map(a=>({lado:"partida",a,input:kiwiInput(f,{flyFrom:a.iata})})),...extra.alt.destino.map(a=>({lado:"destino",a,input:kiwiInput(f,{flyTo:a.iata})}))];
@@ -1684,7 +1685,8 @@ async function run(){
 
   busy=false; $("go").disabled=false; $("go").textContent="Procurar"; $("progress").hidden=true;
   document.dispatchEvent(new CustomEvent("navi:done",{detail:{f,cheapest,count:pool.length,picks:CURPICKS,facts}}));
-  if(cheapest){ startLive(f, head); step("adv","O agente está a testar mais estratégias…","run");
+  if(cheapest && !AI){ startLive(f, head); }
+  else if(cheapest){ startLive(f, head); step("adv","O agente está a testar mais estratégias…","run");
     runAgent(A,f,cheapest,facts).then(res=>{ step("adv",res&&res.total<cheapest.price?`O agente baixou o preço para ${money(res.total)}`:"Agente terminou","ok"); document.dispatchEvent(new CustomEvent("navi:agent",{detail:{res,cheapest}})); }); }
   else { A.setState("Sem resultados"); step("adv","Sem resultados para o agente","off"); gMap.d.remove(); CURMAP=null; }
 }
@@ -1999,12 +2001,13 @@ function ncNext(){
 async function ncStart(fresh){
   NC.body.replaceChildren(); NC.ctrls=[];
   await ncSay("Olá! Sou a Navi, o seu agente de voos. A minha missão é encontrar-lhe o bilhete mais barato, com o preço final e sem surpresas.",300);
-  await ncSay("Pode escrever tudo de uma vez na caixa em baixo, ou responder às minhas perguntas.",500);
+  await ncSay(AI?"Pode escrever tudo de uma vez na caixa em baixo, ou responder às minhas perguntas.":"Vou fazer-lhe algumas perguntas rápidas. Responda com os botões ou escreva na caixa em baixo.",500);
   NC.queue=["orig","dest","type","mode","dates","pax","prefs","confirm"]; ncNext();
 }
 async function ncFreeText(text){
   ncUser(text);
   if(NC.awaiting && !/\s(para|a|até)\s|\d/.test(" "+text+" ")){ const f=NC.awaiting; NC.awaiting=null; f(text); return; }
+  if(!AI){ if(NC.awaiting){ const fn=NC.awaiting; NC.awaiting=null; fn(text); } else { await ncSay("Para já respondo melhor pelos botões. Vamos continuar.",200); if(!NC.queue.length&&!NC.ctrls.length) NC.queue=["orig","dest","type","mode","dates","pax","prefs","confirm"]; ncNext(); } return; }
   const thinking=await ncSay("Deixe-me perceber o que procura…",300);
   try{
     const r=await api("interpretar",{texto:text});
@@ -2056,7 +2059,7 @@ document.addEventListener("navi:done",async e=>{
   const extra = rec.id===c.id ? "e é também a mais barata" : `custa mais ${money(rec.price-c.price)} do que a mais barata, mas ${rec.totalDurationSeconds<c.totalDurationSeconds?`poupa cerca de ${dur(c.totalDurationSeconds-rec.totalDurationSeconds)} de viagem`:"é mais confortável para o seu perfil"}`;
   await ncSay(`Para o seu perfil, recomendo esta opção: ${why.join(", ")}, ${extra}.`,600);
   await ncSay(ncRecCard(rec),0);
-  await ncSay("Agora vou pôr o agente a testar aeroportos vizinhos e outras combinações para ver se consigo baixar ainda mais.",500);
+  if(AI) await ncSay("Agora vou pôr o agente a testar aeroportos vizinhos e outras combinações para ver se consigo baixar ainda mais.",500);
   ncCtrl(ncChips([
     {t:"Ver todas as opções",primary:true,fn:()=>{ $("results").scrollIntoView({behavior:REDUCED?"auto":"smooth"}); }},
     {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
@@ -2127,6 +2130,7 @@ fetch("airports.json").then(r=>r.json()).then(d=>{ AIR=d; d.forEach(a=>{ AIRMAP[
 const startHash=(location.hash||"").slice(1); if(TABS.includes(startHash)) showTab(startHash);
 syncTripLines();
 mcp={}; renderAlerts();
+fetch("/api/estado").then(r=>r.json()).then(e=>{ AI=!!e.agente; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
