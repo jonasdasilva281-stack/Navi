@@ -197,6 +197,8 @@
 .trust svg{width:16px;height:16px;fill:none;stroke:#2fbf71;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:560px){.hero2 .lead{font-size:15.5px!important}.cta{flex:1 1 auto;justify-content:center;padding:12px 16px}.cta.cta-ghost{flex-basis:100%}}
 @media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
+.nv-rodape{max-width:1180px;margin:32px auto 0;padding:0 4px 24px;font-size:12px;color:var(--muted);line-height:1.5}
+.nv-rodape p{margin:0}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1498,7 +1500,7 @@ function completarViagem(destino){
     const i=el("span","cv-i"); i.innerHTML=x.icone; i.setAttribute("aria-hidden","true");
     const t=el("span","cv-tx"); t.append(el("b",null,x.titulo(destino)), el("small",null,x.sub));
     a.append(i,t); g.append(a); });
-  s.append(g); s.append(el("p","note","A Navi pode receber uma comissão destes parceiros, sem custo extra para si.")); return s;
+  s.append(g); return s;
 }
 /* ---------- mapa de preços (widget da Travelpayouts / Aviasales) ---------- */
 let MP_ORIG=null;
@@ -1535,7 +1537,6 @@ function abrirReserva(href, it){
   const go=el("a","sel hand-go",aoVivo?"Ver preços ao vivo":"Continuar para o pagamento"); go.href=href; go.target="_blank"; go.rel="noopener"; go.dataset.ok="1";
   const back=el("button","btn","Voltar"); back.type="button";
   const acts=el("div","hand-acts"); acts.append(go,back); box.append(acts);
-  box.append(el("p","note","A Navi pode receber uma comissão do parceiro, sem custo extra para si."));
   ov.append(box); document.body.append(ov);
   const close=()=>{ ov.remove(); document.removeEventListener("keydown",esc); };
   const esc=e=>{ if(e.key==="Escape") close(); };
@@ -2853,5 +2854,6 @@ fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.age
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
+<footer id="nv-rodape" class="nv-rodape"><p>© Navi · voenavi.pt — A Navi é um comparador gratuito: mostramos ofertas de parceiros de viagem e podemos receber uma comissão quando reserva, sem qualquer custo extra para si.</p></footer>
 </body>
 </html>
