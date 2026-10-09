@@ -881,6 +881,7 @@ body{padding-block:12px 64px}
       <h1>O seu agente de <em>voos baratos</em>.</h1>
       <p class="lead">Converse com a Navi: ela faz as perguntas certas, compara companhias, datas e aeroportos e mostra-lhe o preço com taxas incluídas.</p>
       <button type="button" class="bar-toggle" id="bar-toggle" aria-expanded="false" aria-controls="f">Prefiro a barra de pesquisa</button>
+      <a class="bar-toggle" href="/voos.html" id="ao-vivo-link">Pesquisa ao vivo ✦</a>
     </div>
     <form class="sbar" id="f" novalidate hidden>
       <div class="sbar-opts">
@@ -1477,7 +1478,12 @@ function kiwiLink(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); 
   const u=`https://www.kiwi.com/${PAIS==="BR"?"br":"pt"}/search/results/${o}/${d}/${ida}/${volta||"no-return"}?adults=${Math.max(1,+f.ad||1)}&sortBy=price`;
   return `https://tp.media/r?marker=${encodeURIComponent(TPCFG.marker||"787293")}&p=${encodeURIComponent(TPCFG.kiwiP)}&trs=583106&u=${encodeURIComponent(u)}`; }catch{ return KIWI_CURTO; } }
 function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções"); a.type="button"; a.onclick=()=>abrirReserva(kiwiLink(),null); return a; }
-function liveBtn(text){ if(!LIVE) return null; const a=el("button","sel live-btn",text||"Ver preços de hoje"); a.type="button"; a.onclick=()=>abrirReserva(LIVE,null); return a; }
+// Pesquisa ao vivo dentro da Navi (White Label da Travelpayouts em /voos.html).
+function urlAoVivo(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):"";
+  const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta);
+  return "/voos.html"+(q.toString()?"?"+q.toString():""); }catch{ return "/voos.html"; } }
+function irAoVivo(){ location.href=urlAoVivo(); }
+function liveBtn(text){ const a=el("button","sel live-btn",text||"Ver preços de hoje"); a.type="button"; a.onclick=irAoVivo; return a; }
 const cheapestOf = l => l.slice().sort((a,b)=>a.price-b.price)[0];
 
 /* ---------- progresso ---------- */
@@ -1918,7 +1924,7 @@ async function run(){
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
     if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
-      const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); if(LIVE){ const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=()=>abrirReserva(LIVE,null); bx.append(a1); } const a2=el("button","av-b alt","Comparar mais opções"); a2.type="button"; a2.onclick=()=>abrirReserva(kiwiLink(),null); bx.append(a2); cw.append(bx); listHost.before(cw); }
+      const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); { const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=irAoVivo; bx.append(a1); } const a2=el("button","av-b alt","Comparar mais opções"); a2.type="button"; a2.onclick=()=>abrirReserva(kiwiLink(),null); bx.append(a2); cw.append(bx); listHost.before(cw); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2445,13 +2451,13 @@ document.addEventListener("navi:done",async e=>{
     if(d.f && d.f.stops==="0" && !d.error){
       await ncSay("Não encontrei voos diretos nesta rota para estas datas. Com 1 escala há várias opções e normalmente bem mais baratas. Quer que procure com 1 escala?",300);
       if(SUG.length) await ncSay(`Noutras datas há voos diretos: o mais barato sai ${sugTexto(SUG[0]).replace(/^Para /,"para ")}, desde ${money(SUG[0].preco)}.`,300);
-      ncCtrl(ncChips(SUG.slice(0,2).map(g=>({t:`${sugTexto(g)} · ${money(g.preco)}`,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }})).concat([{t:"Sim, aceito 1 escala",primary:true,fn:()=>{ ncUser("Sim, aceito 1 escala"); NC.profile.stops="1"; $("stops").value="1"; run(); }},{t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }}].concat(LIVE?[{t:"Ver preços de hoje, ao vivo",fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); abrirReserva(LIVE,null); }}]:[]))));
+      ncCtrl(ncChips(SUG.slice(0,2).map(g=>({t:`${sugTexto(g)} · ${money(g.preco)}`,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }})).concat([{t:"Sim, aceito 1 escala",primary:true,fn:()=>{ ncUser("Sim, aceito 1 escala"); NC.profile.stops="1"; $("stops").value="1"; run(); }},{t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }}].concat([{t:"Ver preços de hoje, ao vivo",fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); irAoVivo(); }}]))));
       return;
     }
     await ncSay(d.error?`Não consegui procurar: ${d.error}`:((AVISO&&AVISO.texto)||"Não encontrei voos com estas condições. Quer alargar as datas, aceitar mais escalas ou tentar outro aeroporto?"),300);
 
     const chips=SUG.slice(0,3).map((g,i)=>({t:`${sugTexto(g)} · ${money(g.preco)}`,primary:i===0,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }}));
-    if(LIVE) chips.push({t:"Ver preços de hoje, ao vivo",primary:!SUG.length,fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); abrirReserva(LIVE,null); }});
+    chips.push({t:"Ver preços de hoje, ao vivo",primary:!SUG.length,fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); irAoVivo(); }});
     chips.push({t:"Comparar mais opções",fn:()=>{ ncUser("Comparar mais opções"); abrirReserva(kiwiLink(),null); }});
     chips.push({t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); }},{t:"Recomeçar",fn:()=>ncStart()});
     ncCtrl(ncChips(chips)); return; }
