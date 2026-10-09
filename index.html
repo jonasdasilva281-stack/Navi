@@ -22,6 +22,31 @@
 .band>.topbar .tabs button[aria-selected=true]{background:var(--navy);color:#fff}
 @media (max-width:640px){.band>.topbar{border-radius:18px 18px 0 0}}
 @media (max-width:560px){.band>.topbar{margin:-12px -14px 4px;padding:12px 14px}}
+/* ===== Conversa como chat de lado (widget) ===== */
+.nc-min{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;cursor:pointer;display:grid;place-items:center;color:var(--muted)}
+.nc-min svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.nc-min:hover{color:var(--ink);border-color:var(--ink)}
+.nchat.dock{position:fixed!important;z-index:65;right:16px;bottom:16px;top:auto;width:400px!important;max-width:calc(100vw - 32px)!important;height:min(680px,calc(100dvh - 32px));display:flex!important;flex-direction:column;margin:0!important;border-radius:20px;box-shadow:0 24px 64px rgba(8,18,31,.28),0 2px 6px rgba(8,18,31,.08);animation:chatIn .25s cubic-bezier(.2,.7,.2,1) both}
+.nchat.dock .nc-head{background:#0b1a2c;color:#fff;border-bottom:0}
+.nchat.dock .nc-who small{color:#b8c6d8}
+.nchat.dock .nc-reset,.nchat.dock .nc-min{color:#cfe0f5;border-color:rgba(255,255,255,.25)}
+.nchat.dock .nc-reset:hover,.nchat.dock .nc-min:hover{color:#fff;border-color:#fff}
+.nchat.dock .nc-body{flex:1;height:auto!important;min-height:0!important;max-height:none!important}
+@keyframes chatIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@media (min-width:1200px){
+  .nchat.dock{top:16px;height:auto}
+  body.chat-open{padding-right:432px}
+}
+@media (max-width:760px){
+  .nchat.dock{inset:0;top:0;right:0;bottom:0;width:100%!important;max-width:none!important;height:100dvh;border-radius:0;box-shadow:none}
+  .nchat.dock .nc-head{padding-top:calc(12px + env(safe-area-inset-top))}
+  .nchat.dock .nc-input{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  body.chat-open{overflow:hidden}
+}
+.fab-msg{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;max-width:min(300px,calc(100vw - 32px));background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;font-size:14px;line-height:1.35;box-shadow:0 12px 30px rgba(8,18,31,.18);cursor:pointer;animation:rise .3s both}
+.fab-msg b{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+.fab-msg[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.nchat.dock,.fab-msg{animation:none}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -817,8 +842,9 @@ body{padding-block:12px 64px}
     <section class="nchat" id="nchat" aria-label="Conversa com a Navi" hidden>
       <div class="nc-head">
         <svg class="nc-ava" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 12.5L45.5 46L32 38.6L18.5 46Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g><g fill="#ffffff" fill-opacity=".35"><circle cx="15.5" cy="48.5" r="2.2"/><circle cx="10.5" cy="53.5" r="1.7"/></g></svg>
-        <div class="nc-who"><b>Navi</b><small><i aria-hidden="true"></i>O seu agente de voos</small></div>
+        <div class="nc-who"><b>Navi</b><small><i aria-hidden="true"></i>Online agora</small></div>
         <button type="button" class="nc-reset" id="nc-reset">Recomeçar</button>
+        <button type="button" class="nc-min" id="nc-min" aria-label="Minimizar a conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
       <div class="nc-body" id="nc-body" role="log" aria-live="polite"></div>
       <form class="nc-input" id="nc-form" autocomplete="off">
@@ -2214,9 +2240,10 @@ document.addEventListener("navi:done",async e=>{
   const extra = rec.id===c.id ? "e é também a mais barata" : `custa mais ${money(rec.price-c.price)} do que a mais barata, mas ${rec.totalDurationSeconds<c.totalDurationSeconds?`poupa cerca de ${dur(c.totalDurationSeconds-rec.totalDurationSeconds)} de viagem`:"é mais confortável para o seu perfil"}`;
   await ncSay(`Para o seu perfil, recomendo esta opção: ${why.join(", ")}, ${extra}.`,600);
   await ncSay(ncRecCard(rec),0);
+  setTimeout(()=>mostrarResultados(`Encontrei ${d.count} opções. Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`), 1600);
   if(AI) await ncSay("Agora vou pôr o agente a testar aeroportos vizinhos e outras combinações para ver se consigo baixar ainda mais.",500);
   ncCtrl(ncChips([
-    {t:"Ver todas as opções",primary:true,fn:()=>{ $("results").scrollIntoView({behavior:REDUCED?"auto":"smooth"}); }},
+    {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
     {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
     {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
     {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }}
@@ -2230,6 +2257,7 @@ document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
   NC.body=$("nc-body");
   $("nc-form").addEventListener("submit",e=>{ e.preventDefault(); const t=$("nc-text").value.trim(); if(!t) return; $("nc-text").value=""; ncFreeText(t); });
   $("nc-reset").onclick=()=>ncStart();
+  { const c=$("nchat"); document.body.append(c); c.classList.add("dock"); c.setAttribute("role","dialog"); $("nc-min").onclick=()=>minimizarRobo(); }
   $("bar-toggle").onclick=()=>{ const f=$("f"); f.hidden=!f.hidden; $("bar-toggle").setAttribute("aria-expanded",String(!f.hidden)); $("bar-toggle").textContent=f.hidden?"Prefiro a barra de pesquisa":"Esconder a barra de pesquisa"; };
   $("swap").onclick=()=>{ const o=$("orig").value; $("orig").value=$("dest").value; $("dest").value=o; updateHeroPass(); };
   new MutationObserver(()=>{ const t=$("note").textContent.trim(); if(!$("f").hidden||!t||/^(Preços da Aviasales)/.test(t)) return; ncSay(t,0); }).observe($("note"),{childList:true,characterData:true,subtree:true});
@@ -2244,18 +2272,35 @@ function naviFab(){
   b.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="32" fill="#16283d"/><g transform="rotate(45 32 32)"><path d="M32 14L44 44L32 37.5L20 44Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g></svg><span>Falar com a Navi</span>';
   b.onclick=abrirRobo; document.body.append(b); return b;
 }
+const LARGO=()=>matchMedia("(min-width:1200px)").matches;
+function fabMsg(texto){
+  let m=$("fab-msg"); if(!m){ m=el("div","fab-msg"); m.id="fab-msg"; m.setAttribute("role","status"); m.onclick=abrirRobo; document.body.append(m); }
+  if(!texto){ m.hidden=true; return; }
+  m.replaceChildren(el("b",null,"Navi"), document.createTextNode(texto)); m.hidden=false;
+  clearTimeout(fabMsg.t); fabMsg.t=setTimeout(()=>{ m.hidden=true; },9000);
+}
 function abrirRobo(){
-  $("nchat").hidden=false; naviFab().hidden=true;
-  showTab("procurar");
-  $("nchat").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});
-  setTimeout(()=>{ const t=$("nc-text"); t&&t.focus({preventScroll:true}); },400);
+  const c=$("nchat"); c.hidden=false; naviFab().hidden=true; fabMsg(null);
+  document.body.classList.add("chat-open");
+  setTimeout(()=>{ ncScroll(); const t=$("nc-text"); if(t&&!matchMedia("(max-width:760px)").matches) t.focus({preventScroll:true}); },250);
+}
+// Esconde a conversa no botão do canto (a conversa continua, só fica minimizada).
+function minimizarRobo(msg){
+  $("nchat").hidden=true; document.body.classList.remove("chat-open");
+  naviFab().hidden=false; fabMsg(msg||null);
 }
 function roboDeLado(){
-  $("nchat").hidden=true; naviFab().hidden=false;
+  minimizarRobo();
   if($("f").hidden) $("bar-toggle").click();
   showTab("procurar");
   $("f").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});
   setTimeout(()=>{ const o=$("orig"); o&&o.focus({preventScroll:true}); },400);
+}
+// Resultados: aparecem no ecrã normal. Em ecrãs pequenos a conversa encolhe para o canto.
+function mostrarResultados(msg){
+  if(!LARGO() && !$("nchat").hidden) minimizarRobo(msg);
+  else if(msg && $("nchat").hidden) fabMsg(msg);
+  setTimeout(()=>{ const r=$("results"); if(r&&!r.hidden) r.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); },150);
 }
 
 /* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */

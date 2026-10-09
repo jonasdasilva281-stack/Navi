@@ -173,21 +173,22 @@ async function pesquisarComAlternativas(input) {
   ];
   const origens = [{ code: o, km: 0 }].concat(hubsPerto(o).filter(x => x.km <= 1200).slice(0, 2).map(x => ({ code: x.h, km: x.km })));
   for (const org of origens) {
+    const outra = org.code !== o && org.km > 60; // até 60 km é a mesma cidade (ex.: GRU e SAO)
     for (const nv of niveis) {
       let itens = [];
       try { itens = await pesquisar(nv.mk(Object.assign({}, input, { flyFrom: org.code }))); } catch (e) { if (e.code === "config" || e.code === "input") throw e; }
       if (!itens.length) continue;
-      if (org.code === o && nv.nome === "exato") return { itineraries: itens, aoVivo };
+      if (!outra && nv.nome === "exato") return { itineraries: itens, aoVivo };
       // Poucas opções? Junta também as de estadia diferente, para o cliente ter por onde escolher.
       if (nv.nome !== "estadia" && itens.length < 5) {
         try { const mais = await pesquisar(niveis[2].mk(Object.assign({}, input, { flyFrom: org.code }))); const ids = new Set(itens.map(x => x.id)); mais.forEach(x => { if (!ids.has(x.id)) { x.estadiaDiferente = true; itens.push(x); } }); itens.sort((a, b) => a.price - b.price); } catch { }
       }
       const partes = [];
-      if (org.code !== o) partes.push(`A partir de ${cidade(o)} não encontrámos preços para estas datas. Mostramos voos a partir de ${cidade(org.code)}, a cerca de ${org.km} km: conte com a ligação até lá`);
+      if (outra) partes.push(`A partir de ${cidade(o)} não encontrámos preços para estas datas. Mostramos voos a partir de ${cidade(org.code)}, a cerca de ${org.km} km: conte com a ligação até lá`);
       if (nv.nome === "datas") partes.push(`${partes.length ? "e as datas" : "Para as datas exatas não encontrámos preços. Estas"} são as mais próximas, no mesmo mês`);
       if (nv.nome === "estadia") partes.push(`${partes.length ? "e as datas e a duração da estadia" : "Para estas datas não encontrámos preços. Estas datas e estadias"} são as mais próximas que encontrámos`);
-      itens.forEach(it => { it.approx = org.code !== o ? "origem" : "datas"; if (nv.nome !== "exato") it.approxDatas = true; });
-      return { itineraries: itens, aoVivo, aviso: { tipo: org.code !== o ? "origem" : "datas", hub: org.code !== o ? org.code : null, km: org.km, texto: partes.join(", ") + "." } };
+      itens.forEach(it => { it.approx = outra ? "origem" : "datas"; if (nv.nome !== "exato") it.approxDatas = true; });
+      return { itineraries: itens, aoVivo, aviso: { tipo: outra ? "origem" : "datas", hub: outra ? org.code : null, km: org.km, texto: partes.join(", ") + "." } };
     }
   }
   return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Não encontrámos preços para esta rota nestas datas. Experimente outras datas ou um aeroporto próximo.` } };
