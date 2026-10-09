@@ -1364,6 +1364,8 @@ const EXTRAS=[
   {id:"kkday", titulo:d=>`Experiências locais${d?` em ${d}`:""}`, sub:"Tours, aulas e atividades com guias locais", parceiro:"KKday", url:"https://kkday.tpo.lv/1bIfYoDE",
    icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>'}
 ,
+  {id:"yesim", titulo:d=>`Internet no telemóvel${d?` em ${d}`:""}`, sub:"eSIM com dados móveis, ativa antes de partir, sem trocar de cartão", parceiro:"Yesim", url:"https://yesim.tpo.lv/jmVleXqT",
+   icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M10 11h5v6h-5z"/><path d="M12.5 11v6M10 14h5"/></svg>'},
   {id:"airhelp", titulo:()=>"Voo atrasado ou cancelado?", sub:"Pode ter direito a uma indemnização até 600 € (regras da UE). A AirHelp trata do pedido", parceiro:"AirHelp", url:"https://airhelp.tpo.lv/fUpMwng1",
    icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'}
 ];
@@ -2388,6 +2390,7 @@ document.addEventListener("navi:done",async e=>{
   ncCtrl(ncChips([
     {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
     {t:"Partilhar com alguém",fn:()=>{ ncUser("Partilhar com alguém"); partilharViagem(rec); }},
+    {t:`Internet no destino (eSIM)`,fn:()=>{ ncUser("Internet no destino (eSIM)"); window.open(EXTRAS.find(x=>x.id==="yesim").url,"_blank","noopener"); ncSay(`Abri a Yesim numa nova janela: escolhe o país e instala a eSIM antes de partir, para ter internet logo à chegada.`,200); }},
     {t:`Transfer do aeroporto`,fn:()=>{ ncUser("Transfer do aeroporto"); window.open(EXTRAS.find(x=>x.id==="intui").url,"_blank","noopener"); ncSay(`Abri a Intui numa nova janela: escolhe o aeroporto e o hotel e fica com o transfer marcado, a preço fechado.`,200); }},
     {t:`Passeios em ${cityName($("dest").value)}`,fn:()=>{ ncUser(`Passeios em ${cityName($("dest").value)}`); window.open(EXTRAS[0].link(code($("dest").value)),"_blank","noopener"); ncSay(`Abri a Klook numa nova janela, com passeios, museus e bilhetes para ${cityName($("dest").value)}.`,200); }},
     {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
