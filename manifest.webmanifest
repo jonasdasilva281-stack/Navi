@@ -1,8 +1,8 @@
 {
-  "name": "Navi · O seu agente de voos",
+  "name": "Navi · Voos mais baratos, sem surpresas",
   "short_name": "Navi",
-  "description": "Encontra o voo mais barato: compara companhias, datas e aeroportos por si.",
-  "lang": "pt",
+  "description": "Compare companhias, datas e aeroportos e veja o preço final com taxas incluídas. Voos, hotéis, carros e seguro de viagem.",
+  "lang": "pt-PT",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,8 +10,75 @@
   "background_color": "#0b1a2c",
   "theme_color": "#0b1a2c",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/",
+  "categories": [
+    "travel",
+    "shopping"
+  ],
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Falar com a Navi",
+      "url": "/?abrir=chat",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Preços ao vivo",
+      "url": "/voos.html",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Explorar destinos",
+      "url": "/#explorar",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screen-1.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Página inicial da Navi"
+    },
+    {
+      "src": "/icons/screen-2.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Explorar destinos"
+    }
   ]
 }

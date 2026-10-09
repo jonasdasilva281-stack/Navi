@@ -106,6 +106,7 @@
 .cv-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);text-decoration:none;transition:border-color .15s,transform .15s}
 .cv-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .cv-i{flex:none;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center}
+.inst-ol{margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px}
 .cv-tx{display:grid;gap:2px}.cv-tx b{font-size:15px}.cv-tx small{color:var(--muted);font-size:13px}
 .callout.aviso-fonte{background:#eef4fb;border-color:#cfe0f3;color:var(--ink)}
 .callout.aviso-fonte b{color:var(--navy)}
@@ -983,6 +984,7 @@ body{padding-block:12px 64px}
       <div class="hero-ctas">
         <button type="button" class="cta pri" id="hero-chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Falar com a Navi</button>
         <button type="button" class="cta sec" id="bar-toggle" aria-expanded="false" aria-controls="f"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>Pesquisar voos</button>
+        <button type="button" class="cta cta-ghost" id="btn-instalar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Instalar app</button>
         <a class="cta cta-ghost" href="/voos.html" id="ao-vivo-link"><span class="live-dot" aria-hidden="true"></span>Preços ao vivo</a>
       </div>
       <ul class="trust">
@@ -1586,6 +1588,25 @@ function comConsentimento(fn){
   ov.append(box); document.body.append(ov); ok.focus();
 }
 setTimeout(bannerCookies,1200);
+
+/* ---------- instalar a app ---------- */
+let INSTALAR=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); INSTALAR=e; const b=$("btn-instalar"); if(b) b.hidden=false; });
+function emApp(){ return matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }
+function instalarApp(){
+  if(INSTALAR){ INSTALAR.prompt(); INSTALAR.userChoice.finally(()=>{ INSTALAR=null; }); return; }
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true");
+  const box=el("div","hand-box"); box.append(el("h3",null,"Instalar a Navi no telemóvel"));
+  const ol=el("ol","inst-ol");
+  (ios?["Abra voenavi.pt no Safari.","Toque no botão Partilhar (o quadrado com a seta para cima).","Escolha «Adicionar ao ecrã principal» e toque em Adicionar."]
+      :["Abra voenavi.pt no Chrome.","Toque no menu ⋮ no canto superior direito.","Escolha «Instalar app» ou «Adicionar ao ecrã principal»."]).forEach(t=>ol.append(el("li",null,t)));
+  box.append(ol, el("p","note","A Navi fica com ícone no ecrã e abre em ecrã inteiro, como uma app."));
+  const ok=el("button","sel","Percebi"); ok.type="button"; ok.onclick=()=>ov.remove(); box.append(ok);
+  ov.addEventListener("click",e=>{ if(e.target===ov) ov.remove(); }); ov.append(box); document.body.append(ov); ok.focus();
+}
+(function(){ const b=$("btn-instalar"); if(!b) return; if(emApp()){ b.hidden=true; return; } if(/iphone|ipad|ipod|android/i.test(navigator.userAgent)) b.hidden=false; b.onclick=instalarApp;
+  try{ if(new URLSearchParams(location.search).get("abrir")==="chat") setTimeout(()=>{ document.querySelectorAll(".hand.wel").forEach(x=>x.remove()); abrirRobo(); },300); }catch{} })();
 
 /* ---------- passagem para o pagamento no parceiro ---------- */
 const PARCEIROS=[["aviasales","Aviasales"],["kiwi.tpo.lv","Kiwi.com"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
