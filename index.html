@@ -129,10 +129,9 @@
 .av-live{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px!important;font-size:13px}
 .av-live{gap:8px!important;margin-top:10px!important}
 .av-live span{flex-basis:100%;font-weight:600;color:var(--ink)}
-.av-live a{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:999px;background:var(--accent);border:0;color:#fff!important;text-decoration:none!important;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(228,87,46,.28);transition:transform .15s,box-shadow .15s}
-.av-live a+a{background:#0b1a2c;box-shadow:0 6px 16px rgba(11,26,44,.25)}
-.av-live a::after{content:"↗";font-size:12px}
-.av-live a:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(13,27,42,.22)}
+.av-live .av-b{font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:999px;background:var(--accent);border:0;color:#fff!important;text-decoration:none!important;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(228,87,46,.28);transition:transform .15s,box-shadow .15s}
+.av-live .av-b.alt{background:#0b1a2c;box-shadow:0 6px 16px rgba(11,26,44,.25)}
+.av-live .av-b:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(13,27,42,.22)}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1377,7 +1376,7 @@ function sugestoesUI(host){
       b.onclick=()=>usarSugestao(g); box.append(b); });
     host.append(box);
   }
-  const lb=liveBtn("Ver os preços de hoje, ao vivo"); const w=el("div","sugs-live"); if(lb) w.append(lb); w.append(kiwiBtn(), el("p","note","Abre a pesquisa já preenchida num dos nossos parceiros, com os preços deste momento. A Kiwi.com junta companhias diferentes e muitas vezes encontra combinações mais baratas.")); host.append(w);
+  const lb=liveBtn("Ver os preços de hoje, ao vivo"); const w=el("div","sugs-live"); if(lb) w.append(lb); w.append(kiwiBtn(), el("p","note","Abre a pesquisa já preenchida num dos nossos parceiros, com os preços deste momento. Comparamos também combinações de companhias diferentes, que muitas vezes saem mais baratas.")); host.append(w);
 }
 function noResultsActions(host){
   sugestoesUI(host);
@@ -1412,7 +1411,7 @@ function completarViagem(destino){
   const g=el("div","cv-grid");
   EXTRAS.forEach(x=>{ const a=el("a","cv-card"); a.href=x.link?x.link(cod):x.url; a.target="_blank"; a.rel="noopener sponsored"; a.dataset.ok="1";
     const i=el("span","cv-i"); i.innerHTML=x.icone; i.setAttribute("aria-hidden","true");
-    const t=el("span","cv-tx"); t.append(el("b",null,x.titulo(destino)), el("small",null,`${x.sub} · no site da ${x.parceiro} ↗`));
+    const t=el("span","cv-tx"); t.append(el("b",null,x.titulo(destino)), el("small",null,x.sub));
     a.append(i,t); g.append(a); });
   s.append(g); s.append(el("p","note","A Navi pode receber uma comissão destes parceiros, sem custo extra para si.")); return s;
 }
@@ -1451,8 +1450,8 @@ function kiwiLink(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); 
   if(!o||!d||!ida||!TPCFG.kiwiP) return KIWI_CURTO;
   const u=`https://www.kiwi.com/${PAIS==="BR"?"br":"pt"}/search/results/${o}/${d}/${ida}/${volta||"no-return"}?adults=${Math.max(1,+f.ad||1)}&sortBy=price`;
   return `https://tp.media/r?marker=${encodeURIComponent(TPCFG.marker||"787293")}&p=${encodeURIComponent(TPCFG.kiwiP)}&trs=583106&u=${encodeURIComponent(u)}`; }catch{ return KIWI_CURTO; } }
-function kiwiBtn(){ const a=el("a","btn kiwi-btn","Comparar na Kiwi.com ↗"); a.href=kiwiLink(); a.target="_blank"; a.rel="noopener sponsored"; a.__it=null; return a; }
-function liveBtn(text){ if(!LIVE) return null; const a=el("a","sel live-btn",(text||"Ver preços ao vivo na Aviasales")+" ↗"); a.href=LIVE; a.target="_blank"; a.rel="noopener"; return a; }
+function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções"); a.type="button"; a.onclick=()=>abrirReserva(kiwiLink(),null); return a; }
+function liveBtn(text){ if(!LIVE) return null; const a=el("button","sel live-btn",text||"Ver preços de hoje"); a.type="button"; a.onclick=()=>abrirReserva(LIVE,null); return a; }
 const cheapestOf = l => l.slice().sort((a,b)=>a.price-b.price)[0];
 
 /* ---------- progresso ---------- */
@@ -1893,7 +1892,7 @@ async function run(){
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
     if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
-      const bx=el("p","av-live"); bx.append(el("span",null,"A sua data exata, ao vivo:")); if(LIVE){ const a1=el("a",null,"Aviasales"); a1.href=LIVE; a1.target="_blank"; a1.rel="noopener"; bx.append(a1); } const a2=el("a",null,"Kiwi.com"); a2.href=kiwiLink(); a2.target="_blank"; a2.rel="noopener sponsored"; bx.append(a2); cw.append(bx); listHost.before(cw); }
+      const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); if(LIVE){ const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=()=>abrirReserva(LIVE,null); bx.append(a1); } const a2=el("button","av-b alt","Comparar mais opções"); a2.type="button"; a2.onclick=()=>abrirReserva(kiwiLink(),null); bx.append(a2); cw.append(bx); listHost.before(cw); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2427,7 +2426,7 @@ document.addEventListener("navi:done",async e=>{
 
     const chips=SUG.slice(0,3).map((g,i)=>({t:`${sugTexto(g)} · ${money(g.preco)}`,primary:i===0,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }}));
     if(LIVE) chips.push({t:"Ver preços de hoje, ao vivo",primary:!SUG.length,fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); abrirReserva(LIVE,null); }});
-    chips.push({t:"Comparar na Kiwi.com",fn:()=>{ ncUser("Comparar na Kiwi.com"); abrirReserva(kiwiLink(),null); }});
+    chips.push({t:"Comparar mais opções",fn:()=>{ ncUser("Comparar mais opções"); abrirReserva(kiwiLink(),null); }});
     chips.push({t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); }},{t:"Recomeçar",fn:()=>ncStart()});
     ncCtrl(ncChips(chips)); return; }
   const c=d.cheapest, pool=(window.__VIEW&&window.__VIEW.pool)||[c];
