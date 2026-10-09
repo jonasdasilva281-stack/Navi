@@ -1501,7 +1501,7 @@ function sugestoesUI(host){
       b.onclick=()=>usarSugestao(g); box.append(b); });
     host.append(box);
   }
-  const lb=liveBtn("Ver os preços de hoje, ao vivo"); const w=el("div","sugs-live"); if(lb) w.append(lb); w.append(kiwiBtn(), el("p","note","Abre a pesquisa já preenchida num dos nossos parceiros, com os preços deste momento. Comparamos também combinações de companhias diferentes, que muitas vezes saem mais baratas.")); host.append(w);
+  const lb=liveBtn("Ver os preços de hoje, ao vivo"); const w=el("div","sugs-live"); if(lb) w.append(lb); w.append(kiwiBtn(), el("p","note","Preços deste momento, de todas as companhias, para a sua viagem.")); host.append(w);
 }
 function noResultsActions(host){
   sugestoesUI(host);
@@ -1664,7 +1664,7 @@ function abrirHoteis(){ comConsentimento(()=>{ const cod=code($("dest").value); 
 function irAoVivo(){ comConsentimento(irAoVivo2); }
 function irAoVivo2(){
   const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Pesquisa de voos ao vivo");
-  const bar=el("div","vivo-bar"); const t=el("b",null,"Preços ao vivo"); const x=el("button","vivo-x","Fechar"); x.type="button";
+  const bar=el("div","vivo-bar"); const rot=[code($("orig").value),code($("dest").value)].filter(Boolean).join(" → "); const t=el("b",null,"Preços de hoje"+(rot?" · "+rot:"")); const x=el("button","vivo-x","Fechar"); x.type="button";
   bar.append(t,x); const fr=document.createElement("iframe"); fr.src=urlAoVivo()+(urlAoVivo().includes("?")?"&":"?")+"embed=1"; fr.title="Pesquisa de voos ao vivo"; fr.setAttribute("loading","eager");
   ov.append(bar,fr); document.body.append(ov); document.body.classList.add("vivo-aberto");
   const fechar=()=>{ ov.remove(); document.body.classList.remove("vivo-aberto"); document.removeEventListener("keydown",esc); }; const esc=e=>{ if(e.key==="Escape") fechar(); };
@@ -2723,7 +2723,7 @@ function ncMenuFinal(rec){
   const dest=cityName($("dest").value);
   const abrir=(id,frase,url)=>{ window.open(url||EXTRAS.find(x=>x.id===id).url,"_blank","noopener"); ncSay(frase,200).then(()=>ncMenuFinal(rec)); };
   ncCtrl(ncChips([
-    {t:"Confirmar o preço de hoje",ic:IC.nova,primary:true,fn:()=>{ ncUser("Confirmar o preço de hoje"); const r0=rec.outbound.route; $("d-exact").checked=true; $("ida").value=String(rec.outbound.departureTime).slice(0,10); if(rec.inbound){ $("t-rt").checked=true; $("volta").value=String(rec.inbound.departureTime).slice(0,10); } updateDateUI(); ncSay("Vou abrir a pesquisa ao vivo já preenchida com esta viagem, com os preços deste momento de todas as companhias.",200).then(()=>{ irAoVivo(); ncMenuFinal(rec); }); }},
+    {t:"Confirmar o preço de hoje",ic:IC.nova,primary:true,fn:()=>{ ncUser("Confirmar o preço de hoje"); const r0=rec.outbound.route; $("d-exact").checked=true; $("ida").value=String(rec.outbound.departureTime).slice(0,10); if(rec.inbound){ $("t-rt").checked=true; $("volta").value=String(rec.inbound.departureTime).slice(0,10); } updateDateUI(); ncSay("A confirmar o preço deste momento em todas as companhias, para estas datas exatas…",200).then(()=>{ irAoVivo(); ncMenuFinal(rec); }); }},
     {t:"Ver todas as opções",ic:IC.lista,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
     {t:"Completar a viagem",ic:IC.mala,fn:()=>{ ncUser("Completar a viagem");
       ncSay(`Do que precisa em ${dest}?`,200);

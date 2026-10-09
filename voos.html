@@ -74,8 +74,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
     <a class="back" href="/">← Voltar à Navi</a>
   </header>
   <section class="hero">
-    <h1>Pesquisa de voos <em>ao vivo</em></h1>
-    <p>Preços deste momento, de todas as companhias, com taxas incluídas. Escolha o voo aqui e só sai da Navi para pagar.</p>
+    <h1>Preços de <em>hoje</em></h1>
+    <p>Todas as companhias, com taxas incluídas. Escolha o voo aqui e só sai da Navi para pagar.</p>
   </section>
   <p class="sua" id="sua"></p>
   <div class="ck-ask" id="ck-ask" hidden><p>Esta pesquisa é mostrada por um parceiro da Navi, que usa cookies para funcionar. Aceita os cookies dos parceiros? <a href="/privacidade.html">Saber mais</a></p><button type="button" id="ck-yes">Aceitar e ver os voos</button></div>
@@ -95,7 +95,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
   var el=document.getElementById("sua"); el.classList.add("on");
   el.innerHTML=""; var b=document.createElement("b"); b.textContent="A sua viagem: "+de+" → "+para; el.appendChild(b);
   if(ida){ var s=document.createElement("span"); s.textContent=f(ida)+(volta?" → "+f(volta):" · só ida"); el.appendChild(s); }
-  var n=document.createElement("span"); n.className="note"; n.textContent="A pesquisa abaixo já vem preenchida com a sua viagem."; el.appendChild(n);
+  var n=document.createElement("span"); n.className="note"; n.textContent=""; el.appendChild(n);
 }catch(e){} })();
 </script>
 </body>
