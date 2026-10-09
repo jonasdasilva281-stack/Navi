@@ -2,6 +2,16 @@
 <html lang="pt">
 <head>
 <meta charset="utf-8">
+<script>
+// Se a pesquisa ao vivo (White Label) mandar os resultados para a página inicial, reencaminha para /voos.html.
+(function(){ try{
+  var nossos=["pais","de","para","on","dn","ida","volta","p","m","v","utm_source","utm_medium","utm_campaign","fbclid","gclid"];
+  var q=new URLSearchParams(location.search), outro=false; q.forEach(function(_,k){ if(nossos.indexOf(k)<0) outro=true; });
+  var h=location.hash||""; var hashWL=/^#\/|=/.test(h);
+  if(outro||hashWL) location.replace("/voos.html"+location.search+h);
+}catch(e){} })();
+</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1a2c">
 <meta name="description" content="Navi: o seu agente de voos baratos. Compara companhias, datas e aeroportos e encontra o preço mais baixo.">
