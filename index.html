@@ -225,16 +225,25 @@
 .vivo-ov iframe{width:100%;height:100%;border:0;background:#f4f6f9;border-radius:0 0 18px 18px}
 body.vivo-aberto{overflow:hidden}
 @media (max-width:760px){.vivo-ov{padding:0}.vivo-bar{border-radius:0;padding-top:calc(12px + env(safe-area-inset-top))}.vivo-ov iframe{border-radius:0}}
+.nv-rodape a{color:inherit}
+.ck-banner{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:120;max-width:440px;background:#0b1a2c;color:#e6eef8;border-radius:18px;padding:16px 18px;display:grid;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.35);font-family:"Plus Jakarta Sans",var(--f-body);font-size:14px;line-height:1.45;animation:rise .3s both}
+.ck-banner p{margin:0}.ck-banner a{color:#ffb39e}
+.ck-acts{display:flex;gap:8px;justify-content:flex-end}
+.ck-acts button{font:inherit;font-weight:700;border-radius:999px;padding:9px 18px;cursor:pointer;border:1px solid rgba(255,255,255,.25)}
+.ck-no{background:transparent;color:#e6eef8}.ck-ok{background:#e4572e;border-color:#e4572e!important;color:#fff}
+@media (max-width:560px){.ck-banner{left:8px;right:8px;max-width:none}}
 </style>
-<!-- Travelpayouts: verificação do site -->
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
-  (function () {
-      var script = document.createElement("script");
-      script.async = 1;
-      script.setAttribute("data-cmp-ab","2");
-      script.src = 'https://emrldco.com/NTgzMTA2.js?t=583106';
-      document.head.appendChild(script);
-  })();
+<!-- Travelpayouts: verificação do site (só carrega com consentimento de cookies) -->
+<script>
+  window.naviCarregarParceiros = function () {
+    if (window.__naviParc) return; window.__naviParc = 1;
+    var script = document.createElement("script");
+    script.async = 1;
+    script.setAttribute("data-cmp-ab","2");
+    script.src = 'https://emrldco.com/NTgzMTA2.js?t=583106';
+    document.head.appendChild(script);
+  };
+  try { if (localStorage.getItem("navi-consent") === "sim") window.naviCarregarParceiros(); } catch (e) {}
 </script>
 <title>Navi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1553,6 +1562,29 @@ function mapaPrecos(){
   box.append(sc);
 }
 
+/* ---------- consentimento de cookies (RGPD) ---------- */
+function consent(){ try{ return localStorage.getItem("navi-consent"); }catch{ return null; } }
+function setConsent(v){ try{ localStorage.setItem("navi-consent",v); }catch{} if(v==="sim"&&window.naviCarregarParceiros) window.naviCarregarParceiros(); const b=$("ck-banner"); if(b) b.remove(); }
+function bannerCookies(){
+  if(consent()) return;
+  const b=el("div","ck-banner"); b.id="ck-banner"; b.setAttribute("role","region"); b.setAttribute("aria-label","Cookies");
+  const t=el("p"); t.append(document.createTextNode("Usamos cookies dos nossos parceiros para mostrar preços ao vivo e hotéis e para registar reservas. "));
+  const l=el("a",null,"Saber mais"); l.href="/privacidade.html"; t.append(l);
+  const ac=el("div","ck-acts"); const s1=el("button","ck-ok","Aceitar"); s1.type="button"; s1.onclick=()=>setConsent("sim");
+  const s2=el("button","ck-no","Recusar"); s2.type="button"; s2.onclick=()=>setConsent("nao");
+  ac.append(s2,s1); b.append(t,ac); document.body.append(b);
+}
+function comConsentimento(fn){
+  if(consent()==="sim"){ fn(); return; }
+  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true");
+  const box=el("div","hand-box"); box.append(el("h3",null,"Precisamos da sua autorização"), el("p",null,"Esta pesquisa é mostrada por um parceiro da Navi, que usa cookies para funcionar. Aceita os cookies dos parceiros?"));
+  const acts=el("div","hand-acts"); const ok=el("button","sel","Aceitar e continuar"); ok.type="button"; const no=el("button","btn","Agora não"); no.type="button";
+  ok.onclick=()=>{ setConsent("sim"); ov.remove(); fn(); }; no.onclick=()=>ov.remove(); acts.append(ok,no); box.append(acts);
+  const l=el("a","note","Política de privacidade e cookies"); l.href="/privacidade.html"; box.append(l);
+  ov.append(box); document.body.append(ov); ok.focus();
+}
+setTimeout(bannerCookies,1200);
+
 /* ---------- passagem para o pagamento no parceiro ---------- */
 const PARCEIROS=[["aviasales","Aviasales"],["kiwi.tpo.lv","Kiwi.com"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
 function parceiroDe(href){ const h=String(href||"").toLowerCase(); const m=PARCEIROS.find(([k])=>h.includes(k)); return m?m[1]:null; }
@@ -1605,8 +1637,9 @@ function hoteisSrc(cod){ const en=(AIRMAP&&AIRMAP[cod]&&AIRMAP[cod][2])||cityNam
   let ci="",co="",ad=1; try{ const f=form(); ad=Math.max(1,(+f.ad||1)+(+f.ch||0)); ci=f.mode==="flex"?f.wFrom:f.ida; co=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):(ci?addDays(ci,3):""); }catch{}
   const q=new URLSearchParams({aid:"navi",campaign:"navi-app",address:en,adults:String(ad),maincolor:"e4572e",currency:(CUR||"EUR"),ljs:"pt"}); if(ci) q.set("checkin",ci); if(co) q.set("checkout",co);
   return "https://www.stay22.com/embed/gm?"+q.toString(); }
-function abrirHoteis(){ const cod=code($("dest").value); abrirDentro(`Hotéis em ${cityName($("dest").value)||"destino"}`, hoteisSrc(cod)); }
-function irAoVivo(){
+function abrirHoteis(){ comConsentimento(()=>{ const cod=code($("dest").value); abrirDentro(`Hotéis em ${cityName($("dest").value)||"destino"}`, hoteisSrc(cod)); }); }
+function irAoVivo(){ comConsentimento(irAoVivo2); }
+function irAoVivo2(){
   const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Pesquisa de voos ao vivo");
   const bar=el("div","vivo-bar"); const t=el("b",null,"Preços ao vivo"); const x=el("button","vivo-x","Fechar"); x.type="button";
   bar.append(t,x); const fr=document.createElement("iframe"); fr.src=urlAoVivo()+(urlAoVivo().includes("?")?"&":"?")+"embed=1"; fr.title="Pesquisa de voos ao vivo"; fr.setAttribute("loading","eager");
@@ -2921,6 +2954,6 @@ fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.age
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
-<footer id="nv-rodape" class="nv-rodape"><p>© Navi · Serviço gratuito, apoiado pelos nossos parceiros de viagem.</p></footer>
+<footer id="nv-rodape" class="nv-rodape"><p>© Navi · Serviço gratuito, apoiado pelos nossos parceiros de viagem. · <a href="/privacidade.html">Privacidade e cookies</a></p></footer>
 </body>
 </html>

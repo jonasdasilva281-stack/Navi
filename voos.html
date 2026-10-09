@@ -13,16 +13,18 @@
 <meta property="og:image" content="https://www.voenavi.pt/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Fraunces:opsz,wght@9..144,400..600&display=swap">
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
+<script>
   // Os resultados aparecem nesta mesma página (e não na página inicial).
   window.TPWL_CONFIGURATION = Object.assign({}, window.TPWL_CONFIGURATION || {}, { resultsURL: location.origin + "/voos.html" + (location.search.indexOf("embed=1")>=0 ? "?embed=1" : "") });
-  (function () {
+  window.naviCarregarWL = function () {
+    if (window.__wl) return; window.__wl = 1;
     var script = document.createElement("script");
     script.async = 1;
     script.type = "module";
     script.src = "https://tpemb.com/wl_web/main.js?wl_id=23198";
     document.head.appendChild(script);
-  })();
+  };
+  try { if (localStorage.getItem("navi-consent") === "sim") window.naviCarregarWL(); } catch (e) {}
 </script>
 <style>
 :root{--navy:#0b1a2c;--accent:#e4572e;--ink:#0d1b2a;--muted:#5b6776;--line:#e3e8ef;--bg:#f4f6f9;--card:#fff}
@@ -44,6 +46,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
 .sua.on{display:flex}
 .box{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;min-height:200px}
 .note{color:var(--muted);font-size:13px;margin:0}
+.ck-ask{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:10px;font-size:15px}.ck-ask p{margin:0}.ck-ask a{color:var(--navy)}
+.ck-ask button{justify-self:start;font:inherit;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:11px 20px;cursor:pointer}
+[hidden]{display:none!important}
 .embed .top,.embed .hero{display:none}
 .embed body{padding-top:12px}
 @media (max-width:560px){.nv-wm{height:26px}.nv-ico{width:34px;height:34px}.top{padding:10px 12px}}
@@ -61,6 +66,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
     <p>Preços deste momento, de todas as companhias, com taxas incluídas. Escolha o voo aqui e só sai da Navi para pagar.</p>
   </section>
   <p class="sua" id="sua"></p>
+  <div class="ck-ask" id="ck-ask" hidden><p>Esta pesquisa é mostrada por um parceiro da Navi, que usa cookies para funcionar. Aceita os cookies dos parceiros? <a href="/privacidade.html">Saber mais</a></p><button type="button" id="ck-yes">Aceitar e ver os voos</button></div>
   <section class="box" aria-label="Pesquisa de voos">
     <div id="tpwl-search"></div>
     <div id="tpwl-tickets"></div>
@@ -68,6 +74,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
   <p class="note">Ao escolher um voo, a reserva e o pagamento são concluídos no site do nosso parceiro, com segurança.</p>
 </div>
 <script>
+(function(){ try{ if(localStorage.getItem("navi-consent")!=="sim"){ var a=document.getElementById("ck-ask"); a.hidden=false;
+  document.getElementById("ck-yes").onclick=function(){ try{ localStorage.setItem("navi-consent","sim"); }catch(e){} a.hidden=true; window.naviCarregarWL(); }; } }catch(e){} })();
 (function(){ try{
   var q=new URLSearchParams(location.search); var de=q.get("on")||q.get("de"), para=q.get("dn")||q.get("para"), ida=q.get("ida"), volta=q.get("volta");
   if(!de||!para) return;
