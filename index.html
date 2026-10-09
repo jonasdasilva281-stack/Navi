@@ -105,6 +105,31 @@
 .av-live{font-size:14px;color:var(--muted)}
 .av-live a{color:var(--navy);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .kiwi-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+/* ===== respostas rápidas modernas ===== */
+.nchips{display:flex;flex-wrap:wrap;gap:8px}
+.nchip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 16px 9px 12px;cursor:pointer;box-shadow:0 1px 2px rgba(13,27,42,.06);transition:transform .15s,box-shadow .15s,border-color .15s,background .15s}
+.nchip:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,27,42,.10);border-color:#c9d3df}
+.nchip:active{transform:translateY(0)}
+.nchip .nct{display:grid;text-align:left;line-height:1.15}.nchip .nct b{font-weight:600}.nchip .nct small{font-size:12px;color:var(--muted);font-weight:500}
+.nchip .nci{display:grid;place-items:center;width:20px;height:20px;flex:none;color:currentColor}
+.nchip .nci svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nchip.pri{background:linear-gradient(180deg,#16283d,#0b1a2c);color:#fff;border-color:#0b1a2c;box-shadow:0 6px 16px rgba(11,26,44,.25)}
+.nchip.pri .nct small{color:#b8c6d8}
+.nchip.nchip-ghost{background:transparent;box-shadow:none;border-color:transparent;color:var(--muted);padding-left:8px}
+.nchip.nchip-ghost:hover{color:var(--ink);transform:none;box-shadow:none}
+.nchips.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+.nchips.tiles .nchip{border-radius:16px;padding:12px;align-items:center;gap:10px}
+.nchips.tiles .nci{width:36px;height:36px;border-radius:10px;background:#0b1a2c;color:#fff}
+.nchips.tiles .nci svg{width:20px;height:20px}
+/* aviso moderno */
+.nm.bot .nb{overflow-wrap:anywhere}
+.callout.aviso-fonte{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:start;background:linear-gradient(135deg,#f3f7fc,#eef4fb);border:1px solid #dbe6f3;border-radius:18px;padding:16px 18px}
+.callout.aviso-fonte::before{content:"";grid-row:span 3;width:36px;height:36px;border-radius:11px;background:#0b1a2c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M4 10h16'/%3E%3C/svg%3E") center/20px no-repeat}
+.callout.aviso-fonte b{font-size:15px}
+.av-live{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px!important;font-size:13px}
+.av-live a{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid #d5e1ee;color:var(--navy)!important;text-decoration:none!important;font-weight:600}
+.av-live a::after{content:"↗";font-size:11px;opacity:.7}
+.av-live a:hover{border-color:var(--navy)}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1865,7 +1890,7 @@ async function run(){
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
     if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
-      const bx=el("p","av-live"); bx.append(document.createTextNode("Ver a sua data exata ao vivo: ")); if(LIVE){ const a1=el("a",null,"Aviasales"); a1.href=LIVE; a1.target="_blank"; a1.rel="noopener"; bx.append(a1, document.createTextNode(" · ")); } const a2=el("a",null,"Kiwi.com"); a2.href=kiwiLink(); a2.target="_blank"; a2.rel="noopener sponsored"; bx.append(a2); cw.append(bx); listHost.before(cw); }
+      const bx=el("p","av-live"); bx.append(el("span",null,"A sua data exata, ao vivo:")); if(LIVE){ const a1=el("a",null,"Aviasales"); a1.href=LIVE; a1.target="_blank"; a1.rel="noopener"; bx.append(a1); } const a2=el("a",null,"Kiwi.com"); a2.href=kiwiLink(); a2.target="_blank"; a2.rel="noopener sponsored"; bx.append(a2); cw.append(bx); listHost.before(cw); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2190,7 +2215,21 @@ function ncCtrl(node){ const r=el("div","nm ctrl"); r.append(node); NC.ctrls.pus
   const p=ncFila.then(()=>ncPausa(300)).then(()=>{ if(g!==NC.gen||!NC.ctrls.includes(r)) return; NC.body.append(r); r.classList.add("aparece"); ncScroll();
     const i=r.querySelector('input[type="text"]'); if(i&&!matchMedia("(max-width:760px)").matches) try{ i.focus({preventScroll:true}); i.select(); }catch{} });
   ncFila=p.catch(()=>{}); return r; }
-function ncChips(opts){ const w=el("div","nchips"); opts.forEach(o=>{ const b=el("button","nchip"+(o.primary?" pri":""),o.t); b.type="button"; b.onclick=()=>o.fn(); w.append(b); }); return w; }
+function ncChips(opts,tiles){ const w=el("div","nchips"+(tiles?" tiles":"")); opts.forEach(o=>{ const b=el("button","nchip"+(o.primary?" pri":"")+(o.ghost?" nchip-ghost":"")); b.type="button";
+  if(o.ic){ const i=el("span","nci"); i.innerHTML=o.ic; i.setAttribute("aria-hidden","true"); b.append(i); }
+  const t=el("span","nct"); t.append(el("b",null,o.t)); if(o.sub) t.append(el("small",null,o.sub)); b.append(t);
+  b.onclick=()=>o.fn(); w.append(b); }); return w; }
+const IC={
+  lista:'<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  mala:'<svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M4 12h16"/></svg>',
+  partilhar:'<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
+  mais:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+  voltar:'<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
+  coracao:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  ajustar:'<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
+  nova:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>'
+};
+const icExtra=id=>{ const x=EXTRAS.find(e=>e.id===id); return x?x.icone:""; };
 function ncField(label, input){ const l=el("label","sf"); l.append(el("span",null,label), input); return l; }
 
 const NAVI_POP_DEST=["Lisboa (LIS)","Porto (OPO)","Madrid (MAD)","Paris (CDG)","Londres (LHR)","Miami (MIA)"];
@@ -2412,23 +2451,23 @@ function ncMenuFinal(rec){
   const dest=cityName($("dest").value);
   const abrir=(id,frase,url)=>{ window.open(url||EXTRAS.find(x=>x.id===id).url,"_blank","noopener"); ncSay(frase,200).then(()=>ncMenuFinal(rec)); };
   ncCtrl(ncChips([
-    {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
-    {t:"Completar a viagem",fn:()=>{ ncUser("Completar a viagem");
+    {t:"Ver todas as opções",ic:IC.lista,primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
+    {t:"Completar a viagem",ic:IC.mala,fn:()=>{ ncUser("Completar a viagem");
       ncSay(`Do que precisa em ${dest}?`,200);
       ncCtrl(ncChips([
-        {t:"Alugar carro",fn:()=>{ ncUser("Alugar carro"); abrir("autoeurope","Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras."); }},
-        {t:"Internet no telemóvel",fn:()=>{ ncUser("Internet no telemóvel"); abrir("esim","Abri a Airalo numa nova janela: escolha o país e instale a eSIM antes de partir, para ter internet logo à chegada."); }},
-        {t:"Transfer do aeroporto",fn:()=>{ ncUser("Transfer do aeroporto"); abrir("intui","Abri a Intui numa nova janela: escolha o aeroporto e o hotel e fica com o transfer marcado, a preço fechado."); }},
-        {t:`Passeios em ${dest}`,fn:()=>{ ncUser(`Passeios em ${dest}`); abrir("klook",`Abri a Klook numa nova janela, com passeios e bilhetes para ${dest}.`,EXTRAS[0].link(code($("dest").value))); }},
-        {t:"Voltar",fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}
-      ])); }},
-    {t:"Partilhar",fn:()=>{ ncUser("Partilhar"); partilharViagem(rec); ncMenuFinal(rec); }},
-    {t:"Mais opções",fn:()=>{ ncUser("Mais opções");
+        {t:"Alugar carro",sub:"Auto Europe",ic:icExtra("autoeurope"),fn:()=>{ ncUser("Alugar carro"); abrir("autoeurope","Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras."); }},
+        {t:"Internet",sub:"eSIM Airalo",ic:icExtra("esim"),fn:()=>{ ncUser("Internet no telemóvel"); abrir("esim","Abri a Airalo numa nova janela: escolha o país e instale a eSIM antes de partir, para ter internet logo à chegada."); }},
+        {t:"Transfer",sub:"Aeroporto → hotel",ic:icExtra("intui"),fn:()=>{ ncUser("Transfer do aeroporto"); abrir("intui","Abri a Intui numa nova janela: escolha o aeroporto e o hotel e fica com o transfer marcado, a preço fechado."); }},
+        {t:"Passeios",sub:dest,ic:icExtra("klook"),fn:()=>{ ncUser(`Passeios em ${dest}`); abrir("klook",`Abri a Klook numa nova janela, com passeios e bilhetes para ${dest}.`,EXTRAS[0].link(code($("dest").value))); }}
+      ],true));
+      ncCtrl(ncChips([{t:"Voltar",ic:IC.voltar,ghost:true,fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}])); }},
+    {t:"Partilhar",ic:IC.partilhar,fn:()=>{ ncUser("Partilhar"); partilharViagem(rec); ncMenuFinal(rec); }},
+    {t:"Mais",ic:IC.mais,fn:()=>{ ncUser("Mais opções");
       ncCtrl(ncChips([
-        {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200).then(()=>ncMenuFinal(rec)); }},
-        {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
-        {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }},
-        {t:"Voltar",fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}
+        {t:"Guardar nos favoritos",ic:IC.coracao,fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200).then(()=>ncMenuFinal(rec)); }},
+        {t:"Mudar escalas ou prioridade",ic:IC.ajustar,fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
+        {t:"Nova pesquisa",ic:IC.nova,fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }},
+        {t:"Voltar",ic:IC.voltar,ghost:true,fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}
       ])); }}
   ]));
 }
