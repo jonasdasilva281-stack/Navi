@@ -58,17 +58,34 @@ async function nomeCompanhia(code) {
 }
 
 /* ---------- Travelpayouts: pedidos ---------- */
-async function tpPricesForDates(q) {
+// Pedido genérico à Data API da Travelpayouts (preços guardados das pesquisas na Aviasales).
+async function tpGet(caminho, q, mk) {
   if (!TP_TOKEN) throw Object.assign(new Error("Falta configurar TRAVELPAYOUTS_TOKEN no Vercel."), { code: "config" });
-  const u = new URL("https://api.travelpayouts.com/aviasales/v3/prices_for_dates");
+  const u = new URL("https://api.travelpayouts.com" + caminho);
   Object.entries(q).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, String(v)); });
-  const mk = TP_MARKET || mercado(q.origin);
   if (mk) u.searchParams.set("market", mk);
   u.searchParams.set("token", TP_TOKEN);
   const r = await fetch(u);
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.success === false) throw Object.assign(new Error(j.error || `Travelpayouts respondeu ${r.status}`), { code: "upstream" });
-  return Array.isArray(j.data) ? j.data : [];
+  if (Array.isArray(j.data)) return j.data;
+  if (j.data && typeof j.data === "object") return Object.values(j.data).flatMap(v => Array.isArray(v) ? v : [v]);
+  return [];
+}
+// Cada mercado (Brasil, Portugal, EUA, etc.) tem os seus próprios preços guardados.
+// Procura em vários mercados e em duas fontes (por datas e agrupado por dia) e junta tudo.
+const MERCADOS_EXTRA = ["us", "ru"];
+async function tpPricesForDates(q) {
+  const base = [TP_MARKET || mercado(q.origin), mercado(q.destination)].filter(Boolean);
+  const mercadosA = [...new Set(base.length ? base : ["us"])];
+  const mercadosB = MERCADOS_EXTRA.filter(m => !mercadosA.includes(m));
+  const seguro = pr => pr.catch(e => { if (e.code === "config") throw e; return []; });
+  const grupo = Object.assign({}, q, { group_by: "departure_at" }); delete grupo.limit; delete grupo.sorting; delete grupo.unique;
+  const ronda = ms => Promise.all(ms.flatMap(m => [seguro(tpGet("/aviasales/v3/prices_for_dates", q, m)), seguro(tpGet("/aviasales/v3/grouped_prices", grupo, m))])).then(x => x.flat());
+  let dados = await ronda(mercadosA);
+  if (dados.length < 3) dados = dados.concat(await ronda(mercadosB));
+  const vistos = new Set();
+  return dados.filter(t => { if (!t || !t.departure_at || !t.price) return false; const k = [t.departure_at, t.return_at || "", t.airline, t.flight_number, t.price].join("|"); if (vistos.has(k)) return false; vistos.add(k); return true; });
 }
 
 function linkAfiliado(link) {
