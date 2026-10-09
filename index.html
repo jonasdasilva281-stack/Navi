@@ -21,7 +21,8 @@
 <meta name="twitter:description" content="Diga para onde quer ir. A Navi compara companhias, datas e aeroportos e mostra o preço final, com taxas incluídas.">
 <meta name="twitter:image" content="https://voenavi.pt/og.png">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icons/icon-192.png">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -62,6 +63,13 @@
 .fab-msg b{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
 .fab-msg[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.nchat.dock,.fab-msg{animation:none}}
+/* ===== Marca Navi: palavra + agulha ===== */
+.nv-word{position:relative;display:inline-flex;align-items:baseline;font-family:"Sora",var(--f-display);font-weight:700;font-size:34px;letter-spacing:-.06em;line-height:1;color:var(--navy);padding-top:14px;text-decoration:none}
+.nv-word:hover{color:var(--navy)}
+.nv-v{color:#e4572e}
+.nv-arc{position:absolute;left:0;top:-6px;width:72px;height:25px;color:var(--navy);overflow:visible}
+.ag-icon svg.nd{width:24px;height:24px;transform:none;color:#fff;fill:initial}
+@media (max-width:560px){.nv-word{font-size:30px;padding-top:13px}.nv-arc{width:64px;height:22px}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -75,7 +83,7 @@
 </script>
 <title>Navi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&family=Sora:wght@700&display=swap">
 </head>
 <body>
 <style>
@@ -785,12 +793,13 @@ body{padding-block:12px 64px}
 
 <div class="wrap">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-needle" viewBox="0 0 64 64"><g transform="rotate(45 32 32)"><path d="M32 5L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 59Z" fill="currentColor"/></g></symbol>
     <symbol id="i-plane" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></symbol>
     <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.4 2.3 4.5 6 4.5c2.2 0 3.6 1.2 4.4 2.4h3.2c.8-1.2 2.2-2.4 4.4-2.4 3.7 0 5.6 3.9 4 7.2C19.5 16.4 12 21 12 21z"/></symbol>
   </svg>
   <header class="band">
     <div class="topbar">
-      <p class="brand"><svg class="rs-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#ffffff" fill-opacity=".08"/><g transform="rotate(45 32 32)"><path d="M32 12.5L45.5 46L32 38.6L18.5 46Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g><g fill="#ffffff" fill-opacity=".35"><circle cx="15.5" cy="48.5" r="2.2"/><circle cx="10.5" cy="53.5" r="1.7"/></g></svg><span class="rs-word">navi</span></p>
+      <p class="brand"><a class="nv-word" href="/" aria-label="Navi, página inicial"><svg class="nv-arc" viewBox="0 0 200 70" aria-hidden="true"><path d="M4 66 Q62 4 146 24" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 12"/><svg x="140" y="-2" width="60" height="60" viewBox="0 0 64 64"><g transform="rotate(45 32 32)"><path d="M32 5L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 59Z" fill="currentColor"/></g></svg></svg><span aria-hidden="true">na<span class="nv-v">v</span>i</span></a></p>
     <nav class="tabs" role="tablist" aria-label="Secções">
       <button type="button" role="tab" id="tab-procurar" aria-controls="p-procurar" aria-selected="true">Procurar</button>
       <button type="button" role="tab" id="tab-calendario" aria-controls="p-calendario" aria-selected="false">Calendário do mês</button>
@@ -870,7 +879,7 @@ body{padding-block:12px 64px}
   <div class="panel" id="p-procurar" role="tabpanel" aria-labelledby="tab-procurar">
     <section class="nchat" id="nchat" aria-label="Conversa com a Navi" hidden>
       <div class="nc-head">
-        <svg class="nc-ava" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 12.5L45.5 46L32 38.6L18.5 46Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g><g fill="#ffffff" fill-opacity=".35"><circle cx="15.5" cy="48.5" r="2.2"/><circle cx="10.5" cy="53.5" r="1.7"/></g></svg>
+        <svg class="nc-ava" viewBox="0 0 64 64" aria-hidden="true" style="color:#fff"><rect width="64" height="64" rx="18" fill="#16283d"/><svg x="10" y="10" width="44" height="44" viewBox="0 0 64 64"><g transform="rotate(45 32 32)"><path d="M32 5L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 59Z" fill="currentColor"/></g></svg></svg>
         <div class="nc-who"><b>Navi</b><small><i aria-hidden="true"></i>Online agora</small></div>
         <button type="button" class="nc-reset" id="nc-reset">Recomeçar</button>
         <button type="button" class="nc-min" id="nc-min" aria-label="Minimizar a conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -1295,7 +1304,7 @@ function abrirReserva(href, it){
   const nome=parceiroDe(href)||"parceiro";
   const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","hand-t");
   const box=el("div","hand-box");
-  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
+  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg class="nd" aria-hidden="true"><use href="#i-needle"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
   const h=el("h3",null,"A sua viagem está escolhida"); h.id="hand-t"; box.append(h);
   if(it&&it.outbound){ const r=it.outbound.route; const sm=el("div","hand-sum"); sm.append(el("b",null,`${r[0]} → ${r[r.length-1]} · ${money(it.price)}`), el("span",null,`Ida ${dayLabel(it.outbound.departureTime)}${it.inbound?` · regresso ${dayLabel(it.inbound.departureTime)}`:""}`)); box.append(sm); }
   box.append(el("p",null,`Para escolher o lugar, confirmar o preço final e pagar com segurança, a reserva é concluída no nosso parceiro, a ${nome}. Abre numa nova janela, com a sua pesquisa já preenchida.`));
@@ -1554,7 +1563,7 @@ function createView(main, side){
 /* ---------- agente de preços ---------- */
 function agentCard(parent){
   const c=el("section","agent"); c.setAttribute("aria-live","polite");
-  const head=el("div","ag-head"); const t=el("div","ag-title"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>';
+  const head=el("div","ag-head"); const t=el("div","ag-title"); const ic=el("span","ag-icon"); ic.innerHTML='<svg class="nd" aria-hidden="true"><use href="#i-needle"/></svg>';
   const tt=el("div"); tt.append(el("b",null,"Agente Navi"), el("small",null,"A missão: encontrar-lhe o preço mais baixo"));
   t.append(ic,tt); const state=el("span","ag-state","À espera dos resultados"); head.append(t,state);
   const sum=el("p","ag-sum"); const best=el("div","flist"); const tests=el("div","ag-tests"); const log=el("ul","ag-log"); const acts=el("div","ag-actions");
@@ -2300,7 +2309,7 @@ document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
 function naviFab(){
   let b=$("navi-fab"); if(b) return b;
   b=el("button","navi-fab"); b.id="navi-fab"; b.type="button"; b.hidden=true; b.setAttribute("aria-label","Falar com a Navi");
-  b.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="32" fill="#16283d"/><g transform="rotate(45 32 32)"><path d="M32 14L44 44L32 37.5L20 44Z" fill="#e4572e" stroke="#e4572e" stroke-width="2.4" stroke-linejoin="round"/></g></svg><span>Falar com a Navi</span>';
+  b.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true" style="color:#fff"><rect width="64" height="64" rx="32" fill="#16283d"/><svg x="13" y="13" width="38" height="38" viewBox="0 0 64 64"><g transform="rotate(45 32 32)"><path d="M32 5L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 59Z" fill="currentColor"/></g></svg></svg><span>Falar com a Navi</span>';
   b.onclick=abrirRobo; document.body.append(b); return b;
 }
 const LARGO=()=>matchMedia("(min-width:1200px)").matches;
@@ -2390,7 +2399,7 @@ function boasVindas(){
   const tag=el("p","wel-tag"); tag.innerHTML='A sua próxima viagem <em>começa aqui</em>.'; tag.setAttribute("aria-hidden","true");
   ov.append(tag, el("span","wel-cred","Foto: Unsplash"));
   const box=el("div","hand-box");
-  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
+  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg class="nd" aria-hidden="true"><use href="#i-needle"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
   const V=viagemPartilhada();
   const h=el("h3",null,V?"Partilharam esta viagem consigo":"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
   let shr=null;
