@@ -160,6 +160,18 @@
 #e-out{margin-top:18px}
 @media (max-width:760px){.ex{padding:16px}.ex-row{grid-template-columns:1fr}.ex-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ex-tile{min-height:150px;padding:14px}.ex-tile b{font-size:20px}}
 @media (max-width:380px){.ex-tiles{grid-template-columns:1fr}}
+/* Explorar: fotos e letra moderna */
+[hidden]{display:none!important}
+.ex-head h2{font-family:"Plus Jakarta Sans",var(--f-display)!important;font-weight:800!important;letter-spacing:-.025em!important;font-size:clamp(24px,3.2vw,32px)!important}
+.ex,.ex-tile{font-family:"Plus Jakarta Sans",var(--f-body)}
+.ex-tile{background:var(--img,none) center/cover no-repeat,var(--g)}
+.ex-tile.com-foto{background:linear-gradient(to top,rgba(5,12,22,.82) 0%,rgba(5,12,22,.35) 55%,rgba(5,12,22,.05) 100%),var(--img) center/cover no-repeat}
+.ex-tile.com-foto::before,.ex-tile.com-foto::after{display:none}
+.ex-tile b{font-family:"Plus Jakarta Sans",var(--f-display)!important;font-weight:800!important;font-size:23px!important;letter-spacing:-.02em!important;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.ex-sub{font-weight:700;opacity:.92;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.ex-cods i{background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ex-tile{min-height:190px}
+@media (max-width:760px){.ex-tile{min-height:170px}.ex-tile b{font-size:20px!important}.ex-sub{font-size:11px}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -173,7 +185,7 @@
 </script>
 <title>Navi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&family=Sora:wght@700&family=Fraunces:opsz,wght@9..144,400..600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&family=Sora:wght@700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400..600&display=swap">
 </head>
 <body>
 <style>
@@ -2204,16 +2216,17 @@ async function runExplore(){
 $("fe").addEventListener("submit",e=>{ e.preventDefault(); runExplore(); });
 /* ---------- Explorar: zonas em cartões, origem e datas em pílulas ---------- */
 const ZONAS=[
-  {id:"europa",nome:"Europa",sub:"Capitais e cidades clássicas",g:"linear-gradient(135deg,#1d3557,#457b9d)",cods:["LIS","MAD","CDG","LHR","FCO"]},
-  {id:"portugal",nome:"Portugal e ilhas",sub:"Continente, Madeira e Açores",g:"linear-gradient(135deg,#0f5e5a,#2a9d8f)",cods:["LIS","OPO","FAO","FNC","PDL"]},
-  {id:"brasil",nome:"Brasil",sub:"De norte a sul",g:"linear-gradient(135deg,#1b5e20,#43a047)",cods:["GRU","GIG","SSA","REC","FLN"]},
-  {id:"norte",nome:"América do Norte",sub:"EUA, Canadá e México",g:"linear-gradient(135deg,#2b2d6e,#5a5fc7)",cods:["MIA","MCO","JFK","YYZ","MEX"]},
-  {id:"sul",nome:"América do Sul",sub:"Capitais e montanhas",g:"linear-gradient(135deg,#7a3b12,#d4793b)",cods:["EZE","SCL","LIM","BOG","MVD"]},
-  {id:"caraibas",nome:"Caraíbas",sub:"Praias e ilhas",g:"linear-gradient(135deg,#006d77,#e4572e)",cods:["CUN","PUJ","AUA","CUR","HAV"]}
+  {id:"europa",foto:"photo-1502602898657-3e91760cbb34",nome:"Europa",sub:"Capitais e cidades clássicas",g:"linear-gradient(135deg,#1d3557,#457b9d)",cods:["LIS","MAD","CDG","LHR","FCO"]},
+  {id:"portugal",foto:"photo-1513735492246-483525079686",nome:"Portugal e ilhas",sub:"Continente, Madeira e Açores",g:"linear-gradient(135deg,#0f5e5a,#2a9d8f)",cods:["LIS","OPO","FAO","FNC","PDL"]},
+  {id:"brasil",foto:"photo-1483729558449-99ef09a8c325",nome:"Brasil",sub:"De norte a sul",g:"linear-gradient(135deg,#1b5e20,#43a047)",cods:["GRU","GIG","SSA","REC","FLN"]},
+  {id:"norte",foto:"photo-1496442226666-8d4d0e62e6e9",nome:"América do Norte",sub:"EUA, Canadá e México",g:"linear-gradient(135deg,#2b2d6e,#5a5fc7)",cods:["MIA","MCO","JFK","YYZ","MEX"]},
+  {id:"sul",foto:"photo-1526392060635-9d6019884377",nome:"América do Sul",sub:"Capitais e montanhas",g:"linear-gradient(135deg,#7a3b12,#d4793b)",cods:["EZE","SCL","LIM","BOG","MVD"]},
+  {id:"caraibas",foto:"photo-1507525428034-b723cf961d3e",nome:"Caraíbas",sub:"Praias e ilhas",g:"linear-gradient(135deg,#006d77,#e4572e)",cods:["CUN","PUJ","AUA","CUR","HAV"]}
 ];
 (function initExplorar(){
   const tiles=$("e-tiles"); if(!tiles) return;
-  ZONAS.forEach(z=>{ const b=el("button","ex-tile"); b.type="button"; b.style.setProperty("--g",z.g); b.dataset.z=z.id; b.setAttribute("aria-pressed","false");
+  ZONAS.forEach(z=>{ const b=el("button","ex-tile"); b.type="button"; b.style.setProperty("--g",z.g);
+    if(z.foto){ const u=`https://images.unsplash.com/${z.foto}?auto=format&fit=crop&w=700&q=60`; const im=new Image(); im.onload=()=>{ b.style.setProperty("--img",`url("${u}")`); b.classList.add("com-foto"); }; im.src=u; } b.dataset.z=z.id; b.setAttribute("aria-pressed","false");
     const c=el("span","ex-cods"); z.cods.forEach(x=>c.append(el("i",null,x)));
     b.append(el("span","ex-sub",z.sub), el("b",null,z.nome), c, el("span","ex-go","Ver preços →"));
     b.onclick=()=>{ [...tiles.children].forEach(t=>t.setAttribute("aria-pressed",String(t===b))); $("e-region").value=z.id; runExplore().then(()=>{}); setTimeout(()=>$("e-out").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}),150); };
