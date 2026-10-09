@@ -17,6 +17,9 @@ function daysDiff(a, b) { return Math.round((new Date(b.slice(0, 10) + "T00:00:0
 function iata(s) { const m = String(s || "").match(/\(([A-Za-z]{3})\)/); if (m) return m[1].toUpperCase(); const w = String(s || "").trim(); return /^[A-Za-z]{3}$/.test(w) ? w.toUpperCase() : ""; }
 const MERCADOS = { BR: "br", PT: "pt", ES: "es", US: "us", GB: "uk", FR: "fr", DE: "de", IT: "it", AR: "ar", CL: "cl", CO: "co", MX: "mx", PE: "pe", CA: "ca" };
 function mercado(code) { const a = AEROPORTOS[code]; return a ? (MERCADOS[a[2]] || "") : ""; }
+// Código da cidade para aeroportos de cidades com vários aeroportos (a Travelpayouts guarda muitos preços pela cidade).
+const CIDADE_DE = { HND: "TYO", NRT: "TYO", GRU: "SAO", CGH: "SAO", VCP: "SAO", GIG: "RIO", SDU: "RIO", LHR: "LON", LGW: "LON", STN: "LON", LTN: "LON", LCY: "LON", CDG: "PAR", ORY: "PAR", BVA: "PAR", JFK: "NYC", EWR: "NYC", LGA: "NYC", FCO: "ROM", CIA: "ROM", MXP: "MIL", LIN: "MIL", BGY: "MIL", EZE: "BUE", AEP: "BUE", ORD: "CHI", MDW: "CHI", IAD: "WAS", DCA: "WAS", YYZ: "YTO", YTZ: "YTO", ICN: "SEL", GMP: "SEL", PEK: "BJS", PKX: "BJS", PVG: "SHA", SHA: "SHA", KIX: "OSA", ITM: "OSA", DXB: "DXB", DWC: "DXB", IST: "IST", SAW: "IST", SVO: "MOW", DME: "MOW", ARN: "STO", BMA: "STO", TXL: "BER", BER: "BER", BSB: "BSB", CNF: "BHZ", PLU: "BHZ" };
+const cidadeCod = c => (CIDADE_DE[c] && CIDADE_DE[c] !== c) ? CIDADE_DE[c] : null;
 // Grandes aeroportos/cidades com muitos preços guardados, por país.
 const HUBS_PAIS = { BR: ["SAO", "RIO", "BSB"], PT: ["LIS", "OPO"], ES: ["MAD", "BCN"], US: ["NYC", "MIA", "LAX"], AR: ["BUE"], CL: ["SCL"], CO: ["BOG"], MX: ["MEX"], PE: ["LIM"], GB: ["LON"], FR: ["PAR"], IT: ["ROM", "MIL"], DE: ["FRA", "MUC"], CA: ["YTO"] };
 const HUB_COORD = { SAO: [-23.44, -46.47], RIO: [-22.81, -43.25], BSB: [-15.87, -47.92], LIS: [38.78, -9.14], OPO: [41.24, -8.68], MAD: [40.49, -3.57], BCN: [41.3, 2.08], NYC: [40.64, -73.78], MIA: [25.79, -80.29], LAX: [33.94, -118.41], BUE: [-34.82, -58.54], SCL: [-33.39, -70.79], BOG: [4.7, -74.15], MEX: [19.44, -99.07], LIM: [-12.02, -77.11], LON: [51.47, -0.45], PAR: [49.01, 2.55], ROM: [41.8, 12.25], MIL: [45.63, 8.72], FRA: [50.03, 8.56], MUC: [48.35, 11.79], YTO: [43.68, -79.63] };
@@ -171,12 +174,13 @@ async function pesquisarComAlternativas(input) {
     { nome: "estadia", mk: base => { const q = Object.assign({}, base, { departureDate: "01/" + ida.slice(5, 7) + "/" + ida.slice(0, 4), departureDateTo: dmy(fimMes(d2)), departureDateFlexDays: 0, returnDateFlexDays: 0, returnDate: null });
       if (idaEVolta) { q.nights_in_dst_from = 1; q.nights_in_dst_to = 90; } return q; } }
   ];
-  const origens = [{ code: o, km: 0 }].concat(hubsPerto(o).filter(x => x.km <= 1200).slice(0, 2).map(x => ({ code: x.h, km: x.km })));
+  const origens = [{ code: o, km: 0 }].concat(cidadeCod(o) ? [{ code: cidadeCod(o), km: 0 }] : [], hubsPerto(o).filter(x => x.km <= 1200 && x.h !== cidadeCod(o)).slice(0, 2).map(x => ({ code: x.h, km: x.km })));
+  const destinos = [d].concat(cidadeCod(d) ? [cidadeCod(d)] : []);
   for (const org of origens) {
     const outra = org.code !== o && org.km > 60; // até 60 km é a mesma cidade (ex.: GRU e SAO)
     for (const nv of niveis) {
       let itens = [];
-      try { itens = await pesquisar(nv.mk(Object.assign({}, input, { flyFrom: org.code }))); } catch (e) { if (e.code === "config" || e.code === "input") throw e; }
+      for (const dd of destinos) { if (itens.length) break; try { itens = await pesquisar(nv.mk(Object.assign({}, input, { flyFrom: org.code, flyTo: dd }))); } catch (e) { if (e.code === "config" || e.code === "input") throw e; } }
       if (!itens.length) continue;
       if (!outra && nv.nome === "exato") return { itineraries: itens, aoVivo };
       // Poucas opções? Junta também as de estadia diferente, para o cliente ter por onde escolher.
@@ -191,7 +195,40 @@ async function pesquisarComAlternativas(input) {
       return { itineraries: itens, aoVivo, aviso: { tipo: outra ? "origem" : "datas", hub: outra ? org.code : null, km: org.km, texto: partes.join(", ") + "." } };
     }
   }
-  return { itineraries: [], aoVivo, aviso: { tipo: "vazio", texto: `Não encontrámos preços para esta rota nestas datas. Experimente outras datas ou um aeroporto próximo.` } };
+  // Nada nestas datas: procura alternativas para o cliente nunca ficar sem resposta.
+  const sugestoes = await sugerirAlternativas(input, o, d, ida, origens);
+  const texto = sugestoes.length
+    ? "Para estas datas ainda não temos preços guardados, mas encontrámos estas alternativas. Toque numa para ver os voos."
+    : "Para estas datas ainda não temos preços guardados. Veja os preços ao vivo, com a sua pesquisa já preenchida.";
+  return { itineraries: [], aoVivo, sugestoes, aviso: { tipo: "vazio", texto } };
+}
+
+// Alternativas quando não há preços: outros meses, aeroportos de destino próximos.
+async function sugerirAlternativas(input, o, d, ida, origens) {
+  const out = []; const ymd = s => String(s || "").slice(0, 10);
+  const idaEVolta = !!fromDMY(input.returnDate) || input.nights_in_dst_from != null;
+  const fimMes = iso => new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7), 0)).toISOString().slice(0, 10);
+  const dmy = iso => iso.split("-").reverse().join("/");
+  const mes = (base, k) => { const t = new Date(Date.UTC(+base.slice(0, 4), +base.slice(5, 7) - 1 + k, 1)); return t.toISOString().slice(0, 10); };
+  const hoje = new Date().toISOString().slice(0, 10);
+  const qMes = (from, to, ini) => { const q = Object.assign({}, input, { flyFrom: from, flyTo: to, departureDate: dmy(ini < hoje ? hoje : ini), departureDateTo: dmy(fimMes(ini)), departureDateFlexDays: 0, returnDateFlexDays: 0, returnDate: null }); if (idaEVolta) { q.nights_in_dst_from = 1; q.nights_in_dst_to = 90; } return q; };
+  const melhor = async q => { try { const r = await pesquisar(q); return r[0] || null; } catch (e) { if (e.code === "config") throw e; return null; } };
+  const orgs = origens.slice(0, 2).map(x => x.code);
+  const tarefas = [];
+  // 1) Meses vizinhos (o seguinte, o depois e o anterior se ainda não passou).
+  for (const k of [1, 2, -1]) { const ini = mes(ida, k); if (fimMes(ini) < hoje) continue;
+    for (const org of orgs) tarefas.push(melhor(qMes(org, d, ini)).then(it => it && { tipo: "mes", mes: ini.slice(0, 7), origem: org, it })); }
+  // 2) Destinos próximos (outros grandes aeroportos do país de destino).
+  for (const dh of hubsPerto(d).filter(x => x.km <= 700).slice(0, 2))
+    for (const org of orgs) tarefas.push(melhor(qMes(org, dh.h, ida.slice(0, 8) + "01")).then(it => it && { tipo: "destino", destino: dh.h, cidade: cidade(dh.h), km: dh.km, origem: org, it }));
+  const res = (await Promise.all(tarefas)).filter(Boolean);
+  // O mais barato por mês e por destino.
+  const chave = r => r.tipo + ":" + (r.mes || r.destino);
+  const porChave = new Map(); res.forEach(r => { const c = chave(r); if (!porChave.has(c) || r.it.price < porChave.get(c).it.price) porChave.set(c, r); });
+  [...porChave.values()].sort((a, b) => a.it.price - b.it.price).slice(0, 4).forEach(r => {
+    out.push({ tipo: r.tipo, mes: r.mes || null, destino: r.destino || d, cidadeDestino: r.cidade || cidade(d), origem: r.origem, cidadeOrigem: cidade(r.origem), preco: r.it.price, ida: ymd(r.it.outbound.departureTime), volta: r.it.inbound ? ymd(r.it.inbound.departureTime) : null });
+  });
+  return out;
 }
 
 /* ---------- Anthropic ---------- */
