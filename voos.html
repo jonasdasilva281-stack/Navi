@@ -15,6 +15,18 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=Fraunces:opsz,wght@9..144,400..600&display=swap">
 <script>
   // Os resultados aparecem nesta mesma página (e não na página inicial).
+  // Pesquisa já preenchida: converte de/para/ida/volta/ad no formato da Travelpayouts (ex.: LIS0512GRU29011).
+  (function () { try {
+    var q = new URLSearchParams(location.search);
+    if (q.get("flightSearch") || q.get("params")) return;
+    var de = (q.get("de") || "").toUpperCase(), para = (q.get("para") || "").toUpperCase(), ida = q.get("ida") || "", volta = q.get("volta") || "";
+    if (!/^[A-Z]{3}$/.test(de) || !/^[A-Z]{3}$/.test(para) || !/^\d{4}-\d{2}-\d{2}$/.test(ida)) return;
+    var dm = function (iso) { return iso.slice(8, 10) + iso.slice(5, 7); };
+    var ad = Math.min(9, Math.max(1, parseInt(q.get("ad") || "1", 10) || 1)), ch = Math.min(9, Math.max(0, parseInt(q.get("ch") || "0", 10) || 0));
+    var cod = de + dm(ida) + para + (/^\d{4}-\d{2}-\d{2}$/.test(volta) ? dm(volta) : "") + ad + (ch ? String(ch) : "");
+    q.set("flightSearch", cod); q.set("params", cod);
+    history.replaceState(null, "", location.pathname + "?" + q.toString() + location.hash);
+  } catch (e) {} })();
   window.TPWL_CONFIGURATION = Object.assign({}, window.TPWL_CONFIGURATION || {}, { resultsURL: location.origin + "/voos.html" + (location.search.indexOf("embed=1")>=0 ? "?embed=1" : "") });
   window.naviCarregarWL = function () {
     if (window.__wl) return; window.__wl = 1;
@@ -83,7 +95,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
   var el=document.getElementById("sua"); el.classList.add("on");
   el.innerHTML=""; var b=document.createElement("b"); b.textContent="A sua viagem: "+de+" → "+para; el.appendChild(b);
   if(ida){ var s=document.createElement("span"); s.textContent=f(ida)+(volta?" → "+f(volta):" · só ida"); el.appendChild(s); }
-  var n=document.createElement("span"); n.className="note"; n.textContent="Escreva estes dados no formulário abaixo para ver os preços deste momento."; el.appendChild(n);
+  var n=document.createElement("span"); n.className="note"; n.textContent="A pesquisa abaixo já vem preenchida com a sua viagem."; el.appendChild(n);
 }catch(e){} })();
 </script>
 </body>

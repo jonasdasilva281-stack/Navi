@@ -5,7 +5,7 @@
 <script>
 // Se a pesquisa ao vivo (White Label) mandar os resultados para a página inicial, reencaminha para /voos.html.
 (function(){ try{
-  var nossos=["pais","de","para","on","dn","ida","volta","p","m","v","utm_source","utm_medium","utm_campaign","fbclid","gclid"];
+  var nossos=["pais","de","para","on","dn","ida","volta","p","m","v","ad","ch","abrir","utm_source","utm_medium","utm_campaign","fbclid","gclid"];
   var q=new URLSearchParams(location.search), outro=false; q.forEach(function(_,k){ if(nossos.indexOf(k)<0) outro=true; });
   var h=location.hash||""; var hashWL=/^#\/|=/.test(h);
   if(outro||hashWL) location.replace("/voos.html"+location.search+h);
@@ -1645,7 +1645,7 @@ function kiwiLink(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); 
 function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções"); a.type="button"; a.onclick=()=>abrirReserva(kiwiLink(),null); return a; }
 // Pesquisa ao vivo dentro da Navi (White Label da Travelpayouts em /voos.html).
 function urlAoVivo(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):"";
-  const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta);
+  const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta); q.set("ad",String(Math.max(1,+f.ad||1))); if(+f.ch) q.set("ch",String(+f.ch));
   return "/voos.html"+(q.toString()?"?"+q.toString():""); }catch{ return "/voos.html"; } }
 function abrirDentro(titulo, src){
   const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label",titulo);
@@ -2723,7 +2723,8 @@ function ncMenuFinal(rec){
   const dest=cityName($("dest").value);
   const abrir=(id,frase,url)=>{ window.open(url||EXTRAS.find(x=>x.id===id).url,"_blank","noopener"); ncSay(frase,200).then(()=>ncMenuFinal(rec)); };
   ncCtrl(ncChips([
-    {t:"Ver todas as opções",ic:IC.lista,primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
+    {t:"Confirmar o preço de hoje",ic:IC.nova,primary:true,fn:()=>{ ncUser("Confirmar o preço de hoje"); const r0=rec.outbound.route; $("d-exact").checked=true; $("ida").value=String(rec.outbound.departureTime).slice(0,10); if(rec.inbound){ $("t-rt").checked=true; $("volta").value=String(rec.inbound.departureTime).slice(0,10); } updateDateUI(); ncSay("Vou abrir a pesquisa ao vivo já preenchida com esta viagem, com os preços deste momento de todas as companhias.",200).then(()=>{ irAoVivo(); ncMenuFinal(rec); }); }},
+    {t:"Ver todas as opções",ic:IC.lista,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
     {t:"Completar a viagem",ic:IC.mala,fn:()=>{ ncUser("Completar a viagem");
       ncSay(`Do que precisa em ${dest}?`,200);
       ncCtrl(ncChips([
