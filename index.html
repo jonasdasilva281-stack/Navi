@@ -127,9 +127,12 @@
 .callout.aviso-fonte::before{content:"";grid-row:span 3;width:36px;height:36px;border-radius:11px;background:#0b1a2c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M4 10h16'/%3E%3C/svg%3E") center/20px no-repeat}
 .callout.aviso-fonte b{font-size:15px}
 .av-live{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px!important;font-size:13px}
-.av-live a{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid #d5e1ee;color:var(--navy)!important;text-decoration:none!important;font-weight:600}
-.av-live a::after{content:"↗";font-size:11px;opacity:.7}
-.av-live a:hover{border-color:var(--navy)}
+.av-live{gap:8px!important;margin-top:10px!important}
+.av-live span{flex-basis:100%;font-weight:600;color:var(--ink)}
+.av-live a{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:999px;background:var(--accent);border:0;color:#fff!important;text-decoration:none!important;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(228,87,46,.28);transition:transform .15s,box-shadow .15s}
+.av-live a+a{background:#0b1a2c;box-shadow:0 6px 16px rgba(11,26,44,.25)}
+.av-live a::after{content:"↗";font-size:12px}
+.av-live a:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(13,27,42,.22)}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
