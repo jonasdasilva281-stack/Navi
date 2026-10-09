@@ -100,7 +100,10 @@
 .callout.aviso-fonte{background:#eef4fb;border-color:#cfe0f3;color:var(--ink)}
 .callout.aviso-fonte b{color:var(--navy)}
 .callout.aviso-fonte .live-btn{display:inline-flex}
-.callout.aviso-fonte .row{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.callout.aviso-fonte{padding:14px 16px}
+.callout.aviso-fonte p{margin:4px 0 0}
+.av-live{font-size:14px;color:var(--muted)}
+.av-live a{color:var(--navy);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .kiwi-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 </style>
 <!-- Travelpayouts: verificação do site -->
@@ -1861,7 +1864,8 @@ async function run(){
     facts.maisRapida={preco:money(fast.price),duracaoIda:dur(fast.outbound.durationSeconds)};
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
-    if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto+(LIVE?" Para ver a sua data exata, com os preços deste momento, use o botão abaixo.":""))); const lb=liveBtn("Ver a minha data exata, ao vivo"); const bx=el("div","row"); if(lb) bx.append(lb); bx.append(kiwiBtn()); cw.append(bx); listHost.before(cw); }
+    if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
+      const bx=el("p","av-live"); bx.append(document.createTextNode("Ver a sua data exata ao vivo: ")); if(LIVE){ const a1=el("a",null,"Aviasales"); a1.href=LIVE; a1.target="_blank"; a1.rel="noopener"; bx.append(a1, document.createTextNode(" · ")); } const a2=el("a",null,"Kiwi.com"); a2.href=kiwiLink(); a2.target="_blank"; a2.rel="noopener sponsored"; bx.append(a2); cw.append(bx); listHost.before(cw); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2401,18 +2405,33 @@ document.addEventListener("navi:done",async e=>{
   await ncSay(ncRecCard(rec),0);
   setTimeout(()=>mostrarResultados(`Encontrei ${d.count} ${d.count===1?"opção":"opções"}. Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`), 1600);
   if(AI) await ncSay("Agora vou pôr o agente a testar aeroportos vizinhos e outras combinações para ver se consigo baixar ainda mais.",500);
+  ncMenuFinal(rec);
+});
+// Menu depois da recomendação: poucas opções de cada vez, como numa conversa.
+function ncMenuFinal(rec){
+  const dest=cityName($("dest").value);
+  const abrir=(id,frase,url)=>{ window.open(url||EXTRAS.find(x=>x.id===id).url,"_blank","noopener"); ncSay(frase,200).then(()=>ncMenuFinal(rec)); };
   ncCtrl(ncChips([
     {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
-    {t:"Partilhar com alguém",fn:()=>{ ncUser("Partilhar com alguém"); partilharViagem(rec); }},
-    {t:`Alugar carro`,fn:()=>{ ncUser("Alugar carro"); window.open(EXTRAS.find(x=>x.id==="autoeurope").url,"_blank","noopener"); ncSay(`Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras.`,200); }},
-    {t:`Internet no destino (eSIM)`,fn:()=>{ ncUser("Internet no destino (eSIM)"); window.open(EXTRAS.find(x=>x.id==="esim").url,"_blank","noopener"); ncSay(`Abri a Airalo numa nova janela: escolhe o país e instala a eSIM antes de partir, para ter internet logo à chegada.`,200); }},
-    {t:`Transfer do aeroporto`,fn:()=>{ ncUser("Transfer do aeroporto"); window.open(EXTRAS.find(x=>x.id==="intui").url,"_blank","noopener"); ncSay(`Abri a Intui numa nova janela: escolhe o aeroporto e o hotel e fica com o transfer marcado, a preço fechado.`,200); }},
-    {t:`Passeios em ${cityName($("dest").value)}`,fn:()=>{ ncUser(`Passeios em ${cityName($("dest").value)}`); window.open(EXTRAS[0].link(code($("dest").value)),"_blank","noopener"); ncSay(`Abri a Klook numa nova janela, com passeios, museus e bilhetes para ${cityName($("dest").value)}.`,200); }},
-    {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
-    {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
-    {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }}
+    {t:"Completar a viagem",fn:()=>{ ncUser("Completar a viagem");
+      ncSay(`Do que precisa em ${dest}?`,200);
+      ncCtrl(ncChips([
+        {t:"Alugar carro",fn:()=>{ ncUser("Alugar carro"); abrir("autoeurope","Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras."); }},
+        {t:"Internet no telemóvel",fn:()=>{ ncUser("Internet no telemóvel"); abrir("esim","Abri a Airalo numa nova janela: escolha o país e instale a eSIM antes de partir, para ter internet logo à chegada."); }},
+        {t:"Transfer do aeroporto",fn:()=>{ ncUser("Transfer do aeroporto"); abrir("intui","Abri a Intui numa nova janela: escolha o aeroporto e o hotel e fica com o transfer marcado, a preço fechado."); }},
+        {t:`Passeios em ${dest}`,fn:()=>{ ncUser(`Passeios em ${dest}`); abrir("klook",`Abri a Klook numa nova janela, com passeios e bilhetes para ${dest}.`,EXTRAS[0].link(code($("dest").value))); }},
+        {t:"Voltar",fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}
+      ])); }},
+    {t:"Partilhar",fn:()=>{ ncUser("Partilhar"); partilharViagem(rec); ncMenuFinal(rec); }},
+    {t:"Mais opções",fn:()=>{ ncUser("Mais opções");
+      ncCtrl(ncChips([
+        {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200).then(()=>ncMenuFinal(rec)); }},
+        {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
+        {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }},
+        {t:"Voltar",fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}
+      ])); }}
   ]));
-});
+}
 document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
   if(res&&res.total<cheapest.price) await ncSay(`Boa notícia: o agente encontrou uma forma de pagar ${money(res.total)}, menos ${money(cheapest.price-res.total)}. Está no cartão do agente, no topo dos resultados.`,300);
   else if(res) await ncSay("O agente testou outras combinações e confirmou: a opção mais barata é mesmo a que lhe mostrei.",300);
