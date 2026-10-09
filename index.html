@@ -209,6 +209,22 @@
 @media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
 .nv-rodape{max-width:1180px;margin:32px auto 0;padding:0 4px 24px;font-size:11.5px;color:#8a95a3;line-height:1.5;text-align:center}
 .nv-rodape p{margin:0}
+/* avião a voar no chat enquanto procura */
+.nm.voo .voo-anim{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px;display:grid;gap:4px;min-width:240px}
+.va-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+.va-row b{font-family:"Plus Jakarta Sans",var(--f-display);font-weight:800;font-size:15px;color:var(--navy)}
+.va-row svg{width:100%;height:40px;overflow:visible}
+.va-arc{stroke:#c9d3df}
+.va-plane{fill:#e4572e;offset-path:path("M10 50 Q110 -6 210 50");offset-rotate:auto;animation:voa 2.4s cubic-bezier(.45,.05,.4,1) infinite}
+.va-txt{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.va-plane{animation:none;offset-distance:50%}}
+/* pesquisa ao vivo dentro da Navi */
+.vivo-ov{position:fixed;inset:0;z-index:90;background:rgba(8,18,31,.6);display:grid;grid-template-rows:auto 1fr;padding:16px;gap:0;animation:rise .2s both}
+.vivo-bar{display:flex;align-items:center;justify-content:space-between;background:#0b1a2c;color:#fff;border-radius:18px 18px 0 0;padding:12px 16px;font-family:"Plus Jakarta Sans",var(--f-body)}
+.vivo-x{font:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 14px;cursor:pointer}
+.vivo-ov iframe{width:100%;height:100%;border:0;background:#f4f6f9;border-radius:0 0 18px 18px}
+body.vivo-aberto{overflow:hidden}
+@media (max-width:760px){.vivo-ov{padding:0}.vivo-bar{border-radius:0;padding-top:calc(12px + env(safe-area-inset-top))}.vivo-ov iframe{border-radius:0}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1569,7 +1585,14 @@ function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções")
 function urlAoVivo(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):"";
   const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta);
   return "/voos.html"+(q.toString()?"?"+q.toString():""); }catch{ return "/voos.html"; } }
-function irAoVivo(){ location.href=urlAoVivo(); }
+function irAoVivo(){
+  const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Pesquisa de voos ao vivo");
+  const bar=el("div","vivo-bar"); const t=el("b",null,"Preços ao vivo"); const x=el("button","vivo-x","Fechar"); x.type="button";
+  bar.append(t,x); const fr=document.createElement("iframe"); fr.src=urlAoVivo()+(urlAoVivo().includes("?")?"&":"?")+"embed=1"; fr.title="Pesquisa de voos ao vivo"; fr.setAttribute("loading","eager");
+  ov.append(bar,fr); document.body.append(ov); document.body.classList.add("vivo-aberto");
+  const fechar=()=>{ ov.remove(); document.body.classList.remove("vivo-aberto"); document.removeEventListener("keydown",esc); }; const esc=e=>{ if(e.key==="Escape") fechar(); };
+  x.onclick=fechar; document.addEventListener("keydown",esc);
+}
 function liveBtn(text){ const a=el("button","sel live-btn",text||"Ver preços de hoje"); a.type="button"; a.onclick=irAoVivo; return a; }
 const cheapestOf = l => l.slice().sort((a,b)=>a.price-b.price)[0];
 
@@ -2558,7 +2581,10 @@ async function ncFreeText(text){
     if(!NC.queue.length) NC.queue=["orig","dest","type","mode","dates","pax","prefs","confirm"]; ncNext();
   }
 }
-document.addEventListener("navi:start",()=>{ if(!NC.body) return; ncLock(); ncSay(form().mode==="flex"?"Combinado. Vou testar todas as combinações de datas e comparar companhias. Demora uns segundos.":"Combinado. Estou a comparar companhias e preços.",200); });
+document.addEventListener("navi:start",()=>{ if(!NC.body) return; ncLock(); ncSay(form().mode==="flex"?"Combinado. Vou testar todas as combinações de datas e comparar companhias. Demora uns segundos.":"Combinado. Estou a comparar companhias e preços.",200).then(()=>{ if(!busy) return;
+  const v=el("div","voo-anim"); const f=form(); v.innerHTML=`<div class="va-row"><b>${code(f.orig)||""}</b><svg viewBox="0 0 220 60" aria-hidden="true"><path class="va-arc" d="M10 50 Q110 -6 210 50" fill="none" stroke-width="2.4" stroke-dasharray="3 7" stroke-linecap="round"/><g class="va-plane"><path d="M0-7L6 7L0 3.5L-6 7Z" transform="rotate(90)"/></g></svg><b>${code(f.dest)||""}</b></div><span class="va-txt">A procurar os melhores preços…</span>`;
+  const r=ncRow("bot voo"); r.append(v); ncScroll(); NC.vooAnim=r; }); });
+document.addEventListener("navi:done",()=>{ if(NC.vooAnim){ NC.vooAnim.remove(); NC.vooAnim=null; } });
 document.addEventListener("navi:dates",e=>{ const {best,worst}=e.detail; const t=`Encontrei as datas mais baratas: partir ${dayLabel(best.outbound.departureTime)}${best.inbound?` e voltar ${dayLabel(best.inbound.departureTime)}`:""}, por ${money(best.price)}.${worst.price>best.price?` Nas datas mais caras pagaria ${money(worst.price)}.`:""}`; ncSay(t,300); });
 document.addEventListener("navi:done",async e=>{
   const d=e.detail;
