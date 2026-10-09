@@ -135,6 +135,31 @@
 .mapa-precos{display:grid;gap:12px;margin-bottom:24px}
 .mp-box{min-height:420px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
 .mp-box iframe{width:100%!important;display:block}
+/* ===== Explorar moderno ===== */
+.ex{display:grid;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 1px 2px rgba(13,27,42,.04),0 18px 48px rgba(13,27,42,.06)}
+.ex-head h2{margin:0;font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.015em}
+.ex-head p{margin:6px 0 0;color:var(--muted)}
+.ex-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.ex-field{display:grid;gap:6px}.ex-field>span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ex-field input{font:inherit;font-size:16px;font-weight:600;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--bg);color:var(--ink);width:100%}
+.ex-field input:focus-visible{outline:none;border-color:var(--navy)}
+.ex-pills{display:inline-flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px}
+.ex-pill{font:inherit;font-size:14px;font-weight:600;border:0;background:none;color:var(--muted);padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.ex-pill[aria-checked="true"]{background:#0b1a2c;color:#fff}
+.ex-when{margin:-6px 0 0;font-size:13px;color:var(--muted)}
+.ex-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ex-tile{position:relative;overflow:hidden;display:grid;align-content:end;gap:6px;min-height:168px;text-align:left;font:inherit;color:#fff;border:0;border-radius:20px;padding:18px;background:var(--g);cursor:pointer;box-shadow:0 10px 24px rgba(13,27,42,.14);transition:transform .2s,box-shadow .2s}
+.ex-tile::before{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.10)}
+.ex-tile::after{content:"";position:absolute;right:28px;top:22px;width:64px;height:2px;border-top:2px dashed rgba(255,255,255,.45);transform:rotate(-18deg)}
+.ex-tile:hover{transform:translateY(-3px);box-shadow:0 18px 36px rgba(13,27,42,.22)}
+.ex-tile[aria-pressed="true"]{outline:3px solid #ffb39e;outline-offset:3px}
+.ex-tile b{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:24px;letter-spacing:-.01em;line-height:1.1}
+.ex-sub{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.ex-cods{display:flex;flex-wrap:wrap;gap:4px}.ex-cods i{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.04em;background:rgba(255,255,255,.18);border-radius:6px;padding:2px 6px}
+.ex-go{font-size:13px;font-weight:700;opacity:.9;margin-top:4px}
+#e-out{margin-top:18px}
+@media (max-width:760px){.ex{padding:16px}.ex-row{grid-template-columns:1fr}.ex-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ex-tile{min-height:150px;padding:14px}.ex-tile b{font-size:20px}}
+@media (max-width:380px){.ex-tiles{grid-template-columns:1fr}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1024,20 +1049,30 @@ body{padding-block:12px 64px}
 
   <!-- ===================== EXPLORAR ===================== -->
   <div class="panel" id="p-explorar" role="tabpanel" aria-labelledby="tab-explorar" hidden>
-    <form class="card search" id="fe" novalidate>
-      <p class="trip-line" id="e-trip"></p>
-      <div class="q">
-        <label class="field" for="e-region"><span>Para que zona do mundo?</span>
-          <select id="e-region"><option value="europa" selected>Europa</option><option value="portugal">Portugal e ilhas</option><option value="norte">América do Norte</option><option value="sul">América do Sul</option><option value="brasil">Brasil</option><option value="caraibas">Caraíbas e México</option></select></label>
-        <label class="field" for="e-flex"><span>Datas</span>
-          <select id="e-flex"><option value="0">As datas da minha pesquisa</option><option value="3" selected>Até 3 dias antes ou depois</option><option value="7">Até 1 semana antes ou depois</option></select></label>
+    <form class="ex" id="fe" novalidate>
+      <div class="ex-head">
+        <h2>Para onde é mais barato voar?</h2>
+        <p>Escolha uma zona do mundo e a Navi compara as cidades por preço, com taxas incluídas.</p>
       </div>
-      <button type="submit" class="go" id="e-go">Descobrir para onde é mais barato</button>
-      <p class="note">A origem, as datas, as pessoas e a bagagem vêm do separador Procurar.</p>
+      <div class="ex-row">
+        <label class="ex-field" for="e-orig"><span>A partir de</span><input type="text" id="e-orig" placeholder="A sua cidade" autocomplete="off"></label>
+        <div class="ex-field"><span>Datas</span>
+          <div class="ex-pills" role="radiogroup" aria-label="Flexibilidade das datas">
+            <button type="button" class="ex-pill" data-flex="0" role="radio" aria-checked="false">Exatas</button>
+            <button type="button" class="ex-pill" data-flex="3" role="radio" aria-checked="true">± 3 dias</button>
+            <button type="button" class="ex-pill" data-flex="7" role="radio" aria-checked="false">± 1 semana</button>
+          </div>
+        </div>
+      </div>
+      <p class="ex-when" id="e-when"></p>
+      <p class="trip-line" id="e-trip" hidden></p>
+      <select id="e-region" hidden><option value="europa" selected>Europa</option><option value="portugal">Portugal e ilhas</option><option value="norte">América do Norte</option><option value="sul">América do Sul</option><option value="brasil">Brasil</option><option value="caraibas">Caraíbas e México</option></select>
+      <select id="e-flex" hidden><option value="0">0</option><option value="3" selected>3</option><option value="7">7</option></select>
+      <div class="ex-tiles" id="e-tiles"></div>
+      <button type="submit" class="go" id="e-go" hidden>Descobrir para onde é mais barato</button>
     </form>
     <section id="e-out">
-      <div class="sec-head"><h2>Para onde é mais barato voar</h2><p>Os destinos aparecem do mais barato para o mais caro, com preços reais.</p></div>
-      <div class="list" id="e-list"><div class="ghost"><b>Escolha uma zona</b>Vamos comparar até 12 cidades dessa zona e ordenar pelo preço.</div></div>
+      <div class="list" id="e-list"></div>
     </section>
   </div>
 
@@ -2131,6 +2166,7 @@ async function runExplore(){
   if(!mcp){ list.replaceChildren(); callout(list,"Sem ligação","Abra esta página dentro do Claude para ver preços em tempo real.","err"); return; }
   if(!f.ida||daysUntil(f.ida)<0){ list.replaceChildren(); callout(list,"Escolha uma data","No separador Procurar, escolha uma data de ida que ainda não tenha passado."); return; }
   const oc=code(f.orig);
+  if(!oc){ list.replaceChildren(); callout(list,"De onde parte?","Escreva a sua cidade em «A partir de» e escolha-a na lista."); $("e-orig").focus(); return; }
   const dests=REGIONS[reg].filter(([c])=>c!==oc);
   $("e-go").disabled=true; $("e-go").textContent="A comparar destinos…";
   list.replaceChildren(el("p","note",`A comparar ${dests.length} destinos…`));
@@ -2152,8 +2188,10 @@ async function runExplore(){
     });
     const miss=rows.filter(r=>!r.it).length;
     if(done<dests.length) list.append(el("p","note",`A comparar… ${done} de ${dests.length}`));
-    else if(miss) list.append(el("p","note",`${miss} destino${miss>1?"s":""} sem voos encontrados para estas datas.`));
-    if(done===dests.length&&!ok.length) callout(list,"Sem resultados", failed?errText(failed,KIWI):"Não encontrámos voos para esta zona nestas datas.", failed?"err":"");
+    if(done===dests.length&&!ok.length){
+      const c=el("div","callout aviso-fonte"); c.append(el("b",null,"Ainda sem preços guardados para estas datas"), el("p",null,"Alargue as datas ou veja os preços deste momento, ao vivo."));
+      const bx=el("p","av-live"); const b1=el("button","av-b","Alargar para ± 1 semana"); b1.type="button"; b1.onclick=()=>{ document.querySelector('.ex-pill[data-flex="7"]').click(); runExplore(); };
+      const b2=el("button","av-b alt","Ver preços de hoje"); b2.type="button"; b2.onclick=irAoVivo; bx.append(b1,b2); c.append(bx); list.append(c); }
   };
   await limitPool(dests.map(([c,name])=>async()=>{
     const over={flyTo:c}; if(flex){ over.departureDateFlexDays=flex; if(f.rt) over.returnDateFlexDays=flex; }
@@ -2164,6 +2202,30 @@ async function runExplore(){
   $("e-go").disabled=false; $("e-go").textContent="Descobrir para onde é mais barato";
 }
 $("fe").addEventListener("submit",e=>{ e.preventDefault(); runExplore(); });
+/* ---------- Explorar: zonas em cartões, origem e datas em pílulas ---------- */
+const ZONAS=[
+  {id:"europa",nome:"Europa",sub:"Capitais e cidades clássicas",g:"linear-gradient(135deg,#1d3557,#457b9d)",cods:["LIS","MAD","CDG","LHR","FCO"]},
+  {id:"portugal",nome:"Portugal e ilhas",sub:"Continente, Madeira e Açores",g:"linear-gradient(135deg,#0f5e5a,#2a9d8f)",cods:["LIS","OPO","FAO","FNC","PDL"]},
+  {id:"brasil",nome:"Brasil",sub:"De norte a sul",g:"linear-gradient(135deg,#1b5e20,#43a047)",cods:["GRU","GIG","SSA","REC","FLN"]},
+  {id:"norte",nome:"América do Norte",sub:"EUA, Canadá e México",g:"linear-gradient(135deg,#2b2d6e,#5a5fc7)",cods:["MIA","MCO","JFK","YYZ","MEX"]},
+  {id:"sul",nome:"América do Sul",sub:"Capitais e montanhas",g:"linear-gradient(135deg,#7a3b12,#d4793b)",cods:["EZE","SCL","LIM","BOG","MVD"]},
+  {id:"caraibas",nome:"Caraíbas",sub:"Praias e ilhas",g:"linear-gradient(135deg,#006d77,#e4572e)",cods:["CUN","PUJ","AUA","CUR","HAV"]}
+];
+(function initExplorar(){
+  const tiles=$("e-tiles"); if(!tiles) return;
+  ZONAS.forEach(z=>{ const b=el("button","ex-tile"); b.type="button"; b.style.setProperty("--g",z.g); b.dataset.z=z.id; b.setAttribute("aria-pressed","false");
+    const c=el("span","ex-cods"); z.cods.forEach(x=>c.append(el("i",null,x)));
+    b.append(el("span","ex-sub",z.sub), el("b",null,z.nome), c, el("span","ex-go","Ver preços →"));
+    b.onclick=()=>{ [...tiles.children].forEach(t=>t.setAttribute("aria-pressed",String(t===b))); $("e-region").value=z.id; runExplore().then(()=>{}); setTimeout(()=>$("e-out").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}),150); };
+    tiles.append(b); });
+  document.querySelectorAll(".ex-pill").forEach(p=>p.onclick=()=>{ document.querySelectorAll(".ex-pill").forEach(x=>x.setAttribute("aria-checked",String(x===p))); $("e-flex").value=p.dataset.flex; });
+  const eo=$("e-orig"); attachSuggest(eo);
+  const sync=()=>{ eo.value=$("orig").value; const f=tripF(); $("e-when").textContent=String(tripSub(f)||"").replace(/^[\s·]+/,""); };
+  eo.addEventListener("change",()=>{ $("orig").value=eo.value; $("orig").dispatchEvent(new Event("change")); });
+  $("tab-explorar").addEventListener("click",sync); $("orig").addEventListener("change",()=>{ if(document.activeElement!==eo) eo.value=$("orig").value; });
+  sync();
+})();
+
 
 /* ---------- alertas ---------- */
 let alertsData={lista:[]};
@@ -2692,7 +2754,7 @@ const REGION_TILES={
     top.append(el("span","pc-region",v.r), go);
     const codes=el("div","pc-codes"); v.c.forEach(c=>codes.append(el("span",null,c)));
     b.append(top, el("span","pc-title",v.t), codes);
-    b.onclick=()=>{ $("e-region").value=k; showTab("explorar"); window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"}); runExplore(); };
+    b.onclick=()=>{ $("e-region").value=k; document.querySelectorAll(".ex-tile").forEach(t=>t.setAttribute("aria-pressed",String(t.dataset.z===k))); showTab("explorar"); window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"}); runExplore(); };
     box.append(b);
   });
 })();
