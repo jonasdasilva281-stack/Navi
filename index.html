@@ -1516,7 +1516,7 @@ const EXTRAS=[
      const q=new URLSearchParams({aid:"navi",campaign:"navi-app",address:en}); if(ci) q.set("checkin",ci); if(co) q.set("checkout",co); q.set("adults",String(ad));
      return "https://www.stay22.com/allez/roam?"+q.toString(); },
    icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V8l9-4 9 4v12"/><path d="M3 20h18M9 20v-5h6v5M8 10h.01M12 10h.01M16 10h.01"/></svg>'},
-  {id:"seguro", titulo:()=>"Seguro de viagem", sub:"Despesas médicas, bagagem e cancelamento, para a viagem toda", parceiro:"EKTA", url:"https://ektatraveling.tpo.lv/n9LHTB21",
+  {id:"seguro", titulo:()=>"Viaje seguro", sub:"Seguro de viagem: despesas médicas, bagagem e cancelamento", parceiro:"EKTA", url:"https://ektatraveling.tpo.lv/n9LHTB21",
    icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>'},
   {id:"klook", titulo:d=>`Passeios e bilhetes${d?` em ${d}`:""}`, sub:"Atrações, museus, tours e transportes no destino", parceiro:"Klook", url:"https://klook.tpo.lv/eX0nOuKJ",
    link:cod=>{ const en=(AIRMAP&&AIRMAP[cod]&&AIRMAP[cod][2])||""; const destino=en?"https://www.klook.com/search/result/?query="+encodeURIComponent(en):"https://www.klook.com/"; return `https://tp.media/r?campaign_id=137&marker=${encodeURIComponent(TPCFG.marker||"787293")}&p=4110&trs=583106&u=${encodeURIComponent(destino)}`; },
@@ -2693,7 +2693,7 @@ function ncPerguntaSeguro(rec){
     ? "Uma dica: para entrar na Europa, muitos viajantes precisam de seguro de viagem com cobertura médica. Quer ver um seguro para estas datas?"
     : "Já tem seguro de viagem? Cobre despesas médicas, bagagem e cancelamentos. Quer ver um?",300);
   ncCtrl(ncChips([
-    {t:"Ver seguro",ic:icExtra("seguro"),primary:true,fn:()=>{ ncUser("Ver seguro"); window.open(EXTRAS.find(x=>x.id==="seguro").url,"_blank","noopener"); ncSay("Abri o seguro de viagem numa nova janela. Confirme as coberturas antes de comprar.",200).then(()=>ncMenuFinal(rec)); }},
+    {t:"Viaje seguro",ic:icExtra("seguro"),primary:true,fn:()=>{ ncUser("Viaje seguro"); window.open(EXTRAS.find(x=>x.id==="seguro").url,"_blank","noopener"); ncSay("Abri o seguro de viagem numa nova janela. Confirme as coberturas antes de comprar.",200).then(()=>ncMenuFinal(rec)); }},
     {t:"Já tenho",fn:()=>{ ncUser("Já tenho"); ncMenuFinal(rec); }}
   ]));
 }
@@ -2707,7 +2707,7 @@ function ncMenuFinal(rec){
       ncSay(`Do que precisa em ${dest}?`,200);
       ncCtrl(ncChips([
         {t:"Hotel",sub:dest,ic:icExtra("hotel"),fn:()=>{ ncUser(`Hotel em ${dest}`); abrirHoteis(); ncSay(`Aqui estão os hotéis em ${dest}, já com as datas da sua viagem.`,200).then(()=>ncMenuFinal(rec)); }},
-        {t:"Seguro",sub:"Viagem completa",ic:icExtra("seguro"),fn:()=>{ ncUser("Seguro de viagem"); abrir("seguro","Abri o seguro de viagem numa nova janela. Escolha o destino e as datas e compare as coberturas antes de comprar."); }},
+        {t:"Viaje seguro",sub:"Seguro de viagem",ic:icExtra("seguro"),fn:()=>{ ncUser("Viaje seguro"); abrir("seguro","Abri o seguro de viagem numa nova janela. Escolha o destino e as datas e compare as coberturas antes de comprar."); }},
         {t:"Alugar carro",sub:"Auto Europe",ic:icExtra("autoeurope"),fn:()=>{ ncUser("Alugar carro"); abrir("autoeurope","Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras."); }},
         {t:"Internet",sub:"eSIM Airalo",ic:icExtra("esim"),fn:()=>{ ncUser("Internet no telemóvel"); abrir("esim","Abri a Airalo numa nova janela: escolha o país e instale a eSIM antes de partir, para ter internet logo à chegada."); }},
         {t:"Transfer",sub:"Aeroporto → hotel",ic:icExtra("intui"),fn:()=>{ ncUser("Transfer do aeroporto"); abrir("intui","Abri a Intui numa nova janela: escolha o aeroporto e o hotel e fica com o transfer marcado, a preço fechado."); }},
