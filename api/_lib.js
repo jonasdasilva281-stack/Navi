@@ -191,7 +191,10 @@ async function pesquisarComAlternativas(input) {
     { nome: "estadia", mk: base => { const q = Object.assign({}, base, { departureDate: "01/" + ida.slice(5, 7) + "/" + ida.slice(0, 4), departureDateTo: dmy(fimMes(d2)), departureDateFlexDays: 0, returnDateFlexDays: 0, returnDate: null });
       if (idaEVolta) { q.nights_in_dst_from = 1; q.nights_in_dst_to = 90; } return q; } }
   ];
-  const origens = [{ code: o, km: 0 }].concat(cidadeCod(o) ? [{ code: cidadeCod(o), km: 0 }] : [], hubsPerto(o).filter(x => x.km <= 1200 && x.h !== cidadeCod(o)).slice(0, 2).map(x => ({ code: x.h, km: x.km })));
+  // Só as cidades que o cliente pediu (o aeroporto e a própria cidade). Outras cidades nunca entram nos resultados:
+  // aparecem apenas como sugestão, para o cliente decidir.
+  const origens = [{ code: o, km: 0 }].concat(cidadeCod(o) ? [{ code: cidadeCod(o), km: 0 }] : []);
+  const hubs = hubsPerto(o).filter(x => x.km > 60 && x.km <= 1200 && x.h !== cidadeCod(o)).slice(0, 2).map(x => ({ code: x.h, km: x.km }));
   const destinos = [d].concat(cidadeCod(d) ? [cidadeCod(d)] : []);
   for (const org of origens) {
     const outra = org.code !== o && org.km > 60; // até 60 km é a mesma cidade (ex.: GRU e SAO)
@@ -213,7 +216,7 @@ async function pesquisarComAlternativas(input) {
     }
   }
   // Nada nestas datas: procura alternativas para o cliente nunca ficar sem resposta.
-  const sugestoes = await sugerirAlternativas(input, o, d, ida, origens);
+  const sugestoes = await sugerirAlternativas(input, o, d, ida, origens, hubs);
   const texto = sugestoes.length
     ? "Para estas datas ainda não temos preços guardados, mas encontrámos estas alternativas. Toque numa para ver os voos."
     : "Para estas datas ainda não temos preços guardados. Veja os preços ao vivo, com a sua pesquisa já preenchida.";
@@ -221,7 +224,7 @@ async function pesquisarComAlternativas(input) {
 }
 
 // Alternativas quando não há preços: outros meses, aeroportos de destino próximos.
-async function sugerirAlternativas(input, o, d, ida, origens) {
+async function sugerirAlternativas(input, o, d, ida, origens, hubs) {
   const out = []; const ymd = s => String(s || "").slice(0, 10);
   const idaEVolta = !!fromDMY(input.returnDate) || input.nights_in_dst_from != null;
   const fimMes = iso => new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7), 0)).toISOString().slice(0, 10);
@@ -238,12 +241,14 @@ async function sugerirAlternativas(input, o, d, ida, origens) {
   // 2) Destinos próximos (outros grandes aeroportos do país de destino).
   for (const dh of hubsPerto(d).filter(x => x.km <= 700).slice(0, 2))
     for (const org of orgs) tarefas.push(melhor(qMes(org, dh.h, ida.slice(0, 8) + "01")).then(it => it && { tipo: "destino", destino: dh.h, cidade: cidade(dh.h), km: dh.km, origem: org, it }));
+  // 3) Partir de outra cidade perto (só como sugestão, o cliente decide).
+  for (const h of (hubs || [])) tarefas.push(melhor(qMes(h.code, d, ida.slice(0, 8) + "01")).then(it => it && { tipo: "origem", origem: h.code, km: h.km, it }));
   const res = (await Promise.all(tarefas)).filter(Boolean);
   // O mais barato por mês e por destino.
-  const chave = r => r.tipo + ":" + (r.mes || r.destino);
+  const chave = r => r.tipo + ":" + (r.mes || r.destino || r.origem);
   const porChave = new Map(); res.forEach(r => { const c = chave(r); if (!porChave.has(c) || r.it.price < porChave.get(c).it.price) porChave.set(c, r); });
   [...porChave.values()].sort((a, b) => a.it.price - b.it.price).slice(0, 4).forEach(r => {
-    out.push({ tipo: r.tipo, mes: r.mes || null, destino: r.destino || d, cidadeDestino: r.cidade || cidade(d), origem: r.origem, cidadeOrigem: cidade(r.origem), preco: r.it.price, ida: ymd(r.it.outbound.departureTime), volta: r.it.inbound ? ymd(r.it.inbound.departureTime) : null });
+    out.push({ tipo: r.tipo, km: r.km || null, mes: r.mes || null, destino: r.destino || d, cidadeDestino: r.cidade || cidade(d), origem: r.origem, cidadeOrigem: cidade(r.origem), preco: r.it.price, ida: ymd(r.it.outbound.departureTime), volta: r.it.inbound ? ymd(r.it.inbound.departureTime) : null });
   });
   return out;
 }

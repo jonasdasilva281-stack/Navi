@@ -1471,7 +1471,8 @@ function siteLinks(f,o,d){
 }
 let SUG=[];
 const kiwi = input => api("precos",input).then(p=>{ if(p&&p.aoVivo) LIVE=p.aoVivo; if(p&&Array.isArray(p.sugestoes)&&p.sugestoes.length) SUG=p.sugestoes; if(p&&p.aviso&&(!AVISO||AVISO.tipo==="vazio"||p.aviso.tipo==="origem")) AVISO=p.aviso; return Array.isArray(p&&p.itineraries)?p.itineraries:[]; });
-function sugTexto(g){ return g.tipo==="mes"
+function sugTexto(g){ if(g.tipo==="origem") return `Partir de ${g.cidadeOrigem}${g.km?` (a ${g.km} km)`:""} · ${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}`;
+  return g.tipo==="mes"
   ? `${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}${g.origem&&g.origem!==code($("orig").value)&&norm(g.cidadeOrigem)!==norm(cityName($("orig").value))?` · a partir de ${g.cidadeOrigem}`:""}`
   : `Para ${g.cidadeDestino} · ${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}`; }
 function usarSugestao(g){
@@ -1483,9 +1484,9 @@ function usarSugestao(g){
 }
 function sugestoesUI(host){
   if(SUG.length){
-    const box=el("div","sugs"); box.append(el("p","sugs-t","Encontrámos estas alternativas:"));
+    const box=el("div","sugs"); box.append(el("p","sugs-t","A sua pesquisa ficou como pediu. Se quiser, também encontrámos estas opções:"));
     SUG.forEach(g=>{ const b=el("button","sug-card"); b.type="button";
-      b.append(el("span","sug-k",g.tipo==="mes"?"Outra data":"Destino próximo"), el("b",null,sugTexto(g)), el("span","sug-p",`desde ${money(g.preco)}`));
+      b.append(el("span","sug-k",g.tipo==="mes"?"Outra data":g.tipo==="origem"?"Outra cidade de partida":"Destino próximo"), el("b",null,sugTexto(g)), el("span","sug-p",`desde ${money(g.preco)}`));
       b.onclick=()=>usarSugestao(g); box.append(b); });
     host.append(box);
   }
@@ -2617,7 +2618,8 @@ document.addEventListener("navi:done",async e=>{
     }
     await ncSay(d.error?`Não consegui procurar: ${d.error}`:((AVISO&&AVISO.texto)||"Não encontrei voos com estas condições. Quer alargar as datas, aceitar mais escalas ou tentar outro aeroporto?"),300);
 
-    const chips=SUG.slice(0,3).map((g,i)=>({t:`${sugTexto(g)} · ${money(g.preco)}`,primary:i===0,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }}));
+    if(SUG.length) await ncSay(SUG.some(g=>g.tipo!=="mes")?"Mantive a sua pesquisa como pediu. Se aceitar mudar alguma coisa, encontrei estas opções. Quer ver alguma?":"Mantive as suas cidades. Noutras datas encontrei estas opções. Quer ver alguma?",300);
+    const chips=SUG.slice(0,3).map((g,i)=>({t:`${sugTexto(g)} · ${money(g.preco)}`,primary:i===0,fn:()=>{ ncUser(`Sim: ${sugTexto(g)}`); usarSugestao(g); }}));
     chips.push({t:"Ver preços de hoje, ao vivo",primary:!SUG.length,fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); irAoVivo(); }});
     chips.push({t:"Comparar mais opções",fn:()=>{ ncUser("Comparar mais opções"); abrirReserva(kiwiLink(),null); }});
     chips.push({t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); }},{t:"Recomeçar",fn:()=>ncStart()});
