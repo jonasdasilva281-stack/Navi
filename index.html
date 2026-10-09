@@ -1528,7 +1528,7 @@ function completarViagem(destino){
   const cod=code($("dest").value);
   const s=el("section","cv"); s.append(el("h3","cv-t","Complete a sua viagem"));
   const g=el("div","cv-grid");
-  EXTRAS.forEach(x=>{ const a=el("a","cv-card"); a.href=x.link?x.link(cod):x.url; a.target="_blank"; a.rel="noopener sponsored"; a.dataset.ok="1";
+  EXTRAS.forEach(x=>{ const a=el("a","cv-card"); a.href=x.link?x.link(cod):x.url; if(x.id==="hotel") a.addEventListener("click",e=>{ e.preventDefault(); abrirHoteis(); }); a.target="_blank"; a.rel="noopener sponsored"; a.dataset.ok="1";
     const i=el("span","cv-i"); i.innerHTML=x.icone; i.setAttribute("aria-hidden","true");
     const t=el("span","cv-tx"); t.append(el("b",null,x.titulo(destino)), el("small",null,x.sub));
     a.append(i,t); g.append(a); });
@@ -1591,6 +1591,20 @@ function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções")
 function urlAoVivo(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):"";
   const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta);
   return "/voos.html"+(q.toString()?"?"+q.toString():""); }catch{ return "/voos.html"; } }
+function abrirDentro(titulo, src){
+  const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label",titulo);
+  const bar=el("div","vivo-bar"); const x=el("button","vivo-x","Fechar"); x.type="button"; bar.append(el("b",null,titulo),x);
+  const fr=document.createElement("iframe"); fr.src=src; fr.title=titulo; fr.setAttribute("allow","geolocation");
+  ov.append(bar,fr); document.body.append(ov); document.body.classList.add("vivo-aberto");
+  const fechar=()=>{ ov.remove(); document.body.classList.remove("vivo-aberto"); document.removeEventListener("keydown",esc); }; const esc=e=>{ if(e.key==="Escape") fechar(); };
+  x.onclick=fechar; document.addEventListener("keydown",esc);
+}
+// Hotéis dentro da Navi: mapa da Stay22 com a cidade e as datas da viagem.
+function hoteisSrc(cod){ const en=(AIRMAP&&AIRMAP[cod]&&AIRMAP[cod][2])||cityName($("dest").value)||"";
+  let ci="",co="",ad=1; try{ const f=form(); ad=Math.max(1,(+f.ad||1)+(+f.ch||0)); ci=f.mode==="flex"?f.wFrom:f.ida; co=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):(ci?addDays(ci,3):""); }catch{}
+  const q=new URLSearchParams({aid:"navi",campaign:"navi-app",address:en,adults:String(ad),maincolor:"e4572e",currency:(CUR||"EUR"),ljs:"pt"}); if(ci) q.set("checkin",ci); if(co) q.set("checkout",co);
+  return "https://www.stay22.com/embed/gm?"+q.toString(); }
+function abrirHoteis(){ const cod=code($("dest").value); abrirDentro(`Hotéis em ${cityName($("dest").value)||"destino"}`, hoteisSrc(cod)); }
 function irAoVivo(){
   const ov=el("div","vivo-ov"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Pesquisa de voos ao vivo");
   const bar=el("div","vivo-bar"); const t=el("b",null,"Preços ao vivo"); const x=el("button","vivo-x","Fechar"); x.type="button";
@@ -2631,7 +2645,7 @@ function ncPerguntaHotel(rec){
   const dest=cityName($("dest").value);
   ncSay(`Já tem onde ficar em ${dest}? Posso mostrar-lhe hotéis nas datas da sua viagem.`,300);
   ncCtrl(ncChips([
-    {t:"Ver hotéis",ic:icExtra("hotel"),primary:true,fn:()=>{ ncUser("Ver hotéis"); window.open(EXTRAS.find(x=>x.id==="hotel").link(code($("dest").value)),"_blank","noopener"); ncSay(`Abri os hotéis em ${dest} numa nova janela, com as datas da sua viagem.`,200).then(()=>ncMenuFinal(rec)); }},
+    {t:"Ver hotéis",ic:icExtra("hotel"),primary:true,fn:()=>{ ncUser("Ver hotéis"); abrirHoteis(); ncSay(`Aqui estão os hotéis em ${dest} nas datas da sua viagem. Quando escolher, a reserva é feita no site do hotel ou da plataforma.`,200).then(()=>ncMenuFinal(rec)); }},
     {t:"Já tenho, obrigado",fn:()=>{ ncUser("Já tenho, obrigado"); ncMenuFinal(rec); }}
   ]));
 }
@@ -2644,7 +2658,7 @@ function ncMenuFinal(rec){
     {t:"Completar a viagem",ic:IC.mala,fn:()=>{ ncUser("Completar a viagem");
       ncSay(`Do que precisa em ${dest}?`,200);
       ncCtrl(ncChips([
-        {t:"Hotel",sub:dest,ic:icExtra("hotel"),fn:()=>{ ncUser(`Hotel em ${dest}`); abrir("hotel",`Abri os hotéis em ${dest} numa nova janela, já com as datas da sua viagem. Compare preços da Booking.com, Expedia e outros.`,EXTRAS.find(x=>x.id==="hotel").link(code($("dest").value))); }},
+        {t:"Hotel",sub:dest,ic:icExtra("hotel"),fn:()=>{ ncUser(`Hotel em ${dest}`); abrirHoteis(); ncSay(`Aqui estão os hotéis em ${dest}, já com as datas da sua viagem.`,200).then(()=>ncMenuFinal(rec)); }},
         {t:"Alugar carro",sub:"Auto Europe",ic:icExtra("autoeurope"),fn:()=>{ ncUser("Alugar carro"); abrir("autoeurope","Abri a Auto Europe numa nova janela: escolha o aeroporto de chegada e as datas para comparar as rentadoras."); }},
         {t:"Internet",sub:"eSIM Airalo",ic:icExtra("esim"),fn:()=>{ ncUser("Internet no telemóvel"); abrir("esim","Abri a Airalo numa nova janela: escolha o país e instale a eSIM antes de partir, para ter internet logo à chegada."); }},
         {t:"Transfer",sub:"Aeroporto → hotel",ic:icExtra("intui"),fn:()=>{ ncUser("Transfer do aeroporto"); abrir("intui","Abri a Intui numa nova janela: escolha o aeroporto e o hotel e fica com o transfer marcado, a preço fechado."); }},
