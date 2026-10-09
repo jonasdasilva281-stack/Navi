@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1a2c">
 <meta name="description" content="Navi: o seu agente de voos baratos. Compara companhias, datas e aeroportos e encontra o preço mais baixo.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Navi">
+<meta property="og:url" content="https://voenavi.pt/">
+<meta property="og:title" content="Navi ✈️ O voo mais barato, em segundos">
+<meta property="og:description" content="Diga para onde quer ir. A Navi compara companhias, datas e aeroportos e mostra o preço final, com taxas incluídas.">
+<meta property="og:image" content="https://voenavi.pt/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Navi, o seu agente de voos baratos">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:locale:alternate" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Navi ✈️ O voo mais barato, em segundos">
+<meta name="twitter:description" content="Diga para onde quer ir. A Navi compara companhias, datas e aeroportos e mostra o preço final, com taxas incluídas.">
+<meta name="twitter:image" content="https://voenavi.pt/og.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -497,6 +512,20 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .wel-tag em{font-family:var(--f-serif);font-style:italic;font-weight:400;color:#ffb39e}
 .wel-cred{position:absolute;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;color:rgba(255,255,255,.75)}
 @media (max-height:640px){.wel-tag{display:none}}
+.shr{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff, #f6f8fb)}
+.shr-route{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+.shr-route b{display:block;font-family:var(--f-display);font-size:26px;letter-spacing:-.02em;line-height:1}
+.shr-route small{display:block;color:var(--muted);font-size:12px;margin-top:3px;max-width:110px}
+.shr-route>div:last-child{text-align:right}
+.shr-route svg{width:100%;height:44px;overflow:visible}
+.shr-plane{offset-path:path("M8 50 Q100 -10 192 50");offset-rotate:auto;animation:voa 3.2s cubic-bezier(.45,.05,.4,1) infinite}
+@keyframes voa{0%{offset-distance:0%;opacity:0}10%{opacity:1}90%{opacity:1}100%{offset-distance:100%;opacity:0}}
+.shr-dates{margin:0;font-weight:700;font-size:15px}
+.shr-go{font-size:16px!important;padding:14px!important}
+.shr-price{margin:0;color:var(--muted);font-size:13px}
+.shr-go{animation:pulsa 2.2s ease-in-out infinite}
+@keyframes pulsa{0%,100%{box-shadow:0 0 0 0 rgba(228,87,46,.45)}50%{box-shadow:0 0 0 10px rgba(228,87,46,0)}}
+@media (prefers-reduced-motion:reduce){.shr-plane,.shr-go{animation:none}.shr-plane{offset-distance:50%}}
 .wel-opts{display:grid;gap:10px}
 .wel-opt{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;text-align:left;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
 .wel-opt:hover,.wel-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
@@ -986,7 +1015,7 @@ function dayLabel(iso){ const d=pdate(iso); return `${DOW[d.getDay()]}, ${d.getD
 function hm(t){ return t.slice(11,16); }
 function minutesOf(t){ return Date.UTC(+t.slice(0,4),+t.slice(5,7)-1,+t.slice(8,10),+t.slice(11,13),+t.slice(14,16))/60000; }
 function dur(sec){ const m=Math.round(sec/60), h=Math.floor(m/60), r=m%60; return h? `${h}h${r?" "+String(r).padStart(2,"0")+"min":""}` : `${r}min`; }
-let CUR="BRL";
+let CUR="BRL", PAIS="";
 function money(n,cur){ const c=cur||CUR; try{ return new Intl.NumberFormat(c==="BRL"?"pt-BR":"pt-PT",{style:"currency",currency:c,maximumFractionDigits:0}).format(n); }catch{ return Math.round(n)+" "+(cur||CUR); } }
 function today(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
 function daysUntil(iso){ return Math.round((pdate(iso)-today())/86400000); }
@@ -1443,6 +1472,7 @@ function flightRow(it, tag, note, noteCls){
   const side=el("div","fr-side");
   const tools=el("div","fr-tools"); tools.append(heartBtn(it));
   if(CURMAP){ const mb=el("button","chip","Mapa"); mb.type="button"; mb.onclick=()=>{ [...CURMAP.chips.children].forEach(x=>x.setAttribute("aria-pressed","false")); drawRoute(CURMAP,it,"Opção escolhida"); const d=CURMAP.s.closest("details"); if(d) d.open=true; CURMAP.s.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); }; tools.append(mb); }
+  { const sb=el("button","chip","Partilhar"); sb.type="button"; sb.onclick=()=>partilharViagem(it); tools.append(sb); }
   const pr=el("div"); pr.append(el("div","fr-price",money(it.price)), el("div","fr-sub",priceSub()));
   side.append(tools, pr);
   if(it.bookingUrl){ const a=el("a","sel","Selecionar"); a.href=it.bookingUrl; a.target="_blank"; a.rel="noopener"; a.__it=it; side.append(a); }
@@ -2228,7 +2258,7 @@ document.addEventListener("navi:done",async e=>{
   const c=d.cheapest, pool=(window.__VIEW&&window.__VIEW.pool)||[c];
   if(AVISO&&AVISO.tipo!=="vazio"){ await ncSay(AVISO.texto,300); }
   const rec=ncProfilePick(pool)||c; const pr=NC.profile;
-  await ncSay(`Comparei ${d.count} opções. A mais barata custa ${money(c.price)} no total, com taxas${CTX.bagsWanted?" e as malas":""}.`,400);
+  await ncSay(`${d.count===1?"Encontrei 1 opção. Custa":`Comparei ${d.count} opções. A mais barata custa`} ${money(c.price)} no total, com taxas${CTX.bagsWanted?" e as malas":""}.`,400);
   // recomendação pelo perfil
   const why=[]; const inf=itInfos(rec);
   why.push(`está ${ncProfileLabel()} e a sua prioridade é ${PRIO_TXT[pr.prio]}`);
@@ -2240,10 +2270,11 @@ document.addEventListener("navi:done",async e=>{
   const extra = rec.id===c.id ? "e é também a mais barata" : `custa mais ${money(rec.price-c.price)} do que a mais barata, mas ${rec.totalDurationSeconds<c.totalDurationSeconds?`poupa cerca de ${dur(c.totalDurationSeconds-rec.totalDurationSeconds)} de viagem`:"é mais confortável para o seu perfil"}`;
   await ncSay(`Para o seu perfil, recomendo esta opção: ${why.join(", ")}, ${extra}.`,600);
   await ncSay(ncRecCard(rec),0);
-  setTimeout(()=>mostrarResultados(`Encontrei ${d.count} opções. Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`), 1600);
+  setTimeout(()=>mostrarResultados(`Encontrei ${d.count} ${d.count===1?"opção":"opções"}. Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`), 1600);
   if(AI) await ncSay("Agora vou pôr o agente a testar aeroportos vizinhos e outras combinações para ver se consigo baixar ainda mais.",500);
   ncCtrl(ncChips([
     {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
+    {t:"Partilhar com alguém",fn:()=>{ ncUser("Partilhar com alguém"); partilharViagem(rec); }},
     {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
     {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
     {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }}
@@ -2303,6 +2334,51 @@ function mostrarResultados(msg){
   setTimeout(()=>{ const r=$("results"); if(r&&!r.hidden) r.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"}); },150);
 }
 
+/* ---------- partilhar uma viagem: link que abre a Navi já com essa pesquisa ---------- */
+function nomeDe(code){ return (typeof PTNAME!=="undefined"&&PTNAME[code])||(AIRMAP&&AIRMAP[code]&&AIRMAP[code][2])||code; }
+function partilharViagem(it){
+  const r=it.outbound.route, o=r[0], d=r[r.length-1];
+  const ida=String(it.outbound.departureTime).slice(0,10), volta=it.inbound?String(it.inbound.departureTime).slice(0,10):"";
+  const on=nomeDe(o), dn=nomeDe(d);
+  const q=new URLSearchParams({de:o,para:d,on,dn,ida}); if(volta) q.set("volta",volta); q.set("p",String(Math.round(it.price))); q.set("m",CUR); q.set("v",new Date().toISOString().slice(0,10));
+  const url=location.origin+"/?"+q.toString();
+  const texto=`✈️ ${on} → ${dn} por ${money(it.price)}${volta?" (ida e volta)":""}, com taxas incluídas. Encontrei na Navi, veja se ainda está a este preço:`;
+  if(navigator.share){ navigator.share({title:"Navi",text:texto,url}).catch(()=>{}); return; }
+  const tudo=texto+" "+url;
+  (navigator.clipboard?navigator.clipboard.writeText(tudo):Promise.reject()).then(()=>toast("Link copiado. Cole-o no WhatsApp, Instagram ou onde quiser."),()=>{ window.prompt("Copie este link:",tudo); });
+}
+function viagemPartilhada(){
+  let q; try{ q=new URLSearchParams(location.search); }catch{ return null; }
+  const de=(q.get("de")||"").toUpperCase(), para=(q.get("para")||"").toUpperCase(), ida=q.get("ida")||"";
+  if(!/^[A-Z]{3}$/.test(de)||!/^[A-Z]{3}$/.test(para)||!/^\d{4}-\d{2}-\d{2}$/.test(ida)) return null;
+  const volta=/^\d{4}-\d{2}-\d{2}$/.test(q.get("volta")||"")?q.get("volta"):"";
+  return {de,para,ida,volta,on:(q.get("on")||de).slice(0,40),dn:(q.get("dn")||para).slice(0,40),p:+q.get("p")||0,m:(q.get("m")||"").slice(0,3).toUpperCase(),v:q.get("v")||""};
+}
+function abrirViagemPartilhada(V){
+  $("orig").value=`${V.on} (${V.de})`; $("dest").value=`${V.dn} (${V.para})`;
+  $("d-exact").checked=true; $("ida").value=V.ida; $("flex").value="0";
+  if(V.volta){ $("t-rt").checked=true; $("volta").value=V.volta; } else $("t-ow").checked=true;
+  updateDateUI(); updateHeroPass();
+  try{ history.replaceState(null,"",location.pathname+(PAIS&&new URLSearchParams(location.search).get("pais")?"?pais="+PAIS:"")); }catch{}
+  minimizarRobo(); showTab("procurar"); run();
+}
+function cartaoPartilha(V, box, fechar){
+  const card=el("div","shr");
+  const rota=el("div","shr-route");
+  rota.innerHTML=`<div><b>${V.de}</b><small></small></div><svg viewBox="0 0 200 60" aria-hidden="true"><path id="shr-arc" d="M8 50 Q100 -10 192 50" fill="none" stroke="#c9d3df" stroke-width="2" stroke-dasharray="4 6"/><g class="shr-plane"><path d="M0-6L5 6L0 3L-5 6Z" fill="#e4572e" transform="rotate(90)"/></g></svg><div><b>${V.para}</b><small></small></div>`;
+  rota.querySelectorAll("small")[0].textContent=V.on; rota.querySelectorAll("small")[1].textContent=V.dn;
+  card.append(rota);
+  const f=iso=>{ try{ return dayLabel(iso+"T12:00:00"); }catch{ return iso; } };
+  card.append(el("p","shr-dates",V.volta?`${f(V.ida)} → ${f(V.volta)}`:`Só ida · ${f(V.ida)}`));
+  if(V.p){ let pr; try{ pr=new Intl.NumberFormat(V.m==="BRL"?"pt-BR":"pt-PT",{style:"currency",currency:V.m||CUR,maximumFractionDigits:0}).format(V.p); }catch{ pr=String(V.p); }
+    card.append(el("p","shr-price",`Foi encontrada por ${pr}${V.v?` em ${f(V.v)}`:""}. Os preços mudam todos os dias.`)); }
+  const go=el("button","sel shr-go","Ver o preço de hoje"); go.type="button"; go.onclick=()=>{ fechar(); abrirViagemPartilhada(V); };
+  const outra=el("button","btn","Procurar outra viagem"); outra.type="button";
+  const acts=el("div","hand-acts"); acts.append(go,outra); card.append(acts);
+  box.append(card);
+  return {go,outra};
+}
+
 /* ---------- janela de boas-vindas: o cliente escolhe como quer procurar ---------- */
 function boasVindas(){
   const ov=el("div","hand wel"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","wel-t");
@@ -2315,19 +2391,24 @@ function boasVindas(){
   ov.append(tag, el("span","wel-cred","Foto: Unsplash"));
   const box=el("div","hand-box");
   const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
-  const h=el("h3",null,"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
-  box.append(el("p",null,"Como prefere encontrar o seu voo?"));
+  const V=viagemPartilhada();
+  const h=el("h3",null,V?"Partilharam esta viagem consigo":"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
+  let shr=null;
+  if(V){ shr=cartaoPartilha(V, box, ()=>fecharTudo()); }
+  const pergunta=el("p",null,"Como prefere encontrar o seu voo?"); box.append(pergunta);
   const opt=(cls,icone,tit,sub)=>{ const b=el("button","wel-opt"+(cls?" "+cls:"")); b.type="button"; const i=el("span","wi",icone); i.setAttribute("aria-hidden","true"); const t=el("span"); t.append(el("b",null,tit),el("small",null,sub)); b.append(i,t); return b; };
   const bChat=opt("rec","💬","Falar com a Navi","Respondo a umas perguntas rápidas e a Navi encontra a melhor opção para si.");
   const bBar=opt("","🔎","Pesquisar sozinho","Preencho origem, destino e datas na barra de pesquisa.");
   const opts=el("div","wel-opts"); opts.append(bChat,bBar); box.append(opts);
+  if(V){ pergunta.hidden=true; opts.hidden=true; tag.innerHTML='Vamos <em>viajar</em>?'; shr.outra.onclick=()=>{ shr.outra.closest(".shr").remove(); h.textContent="Bem-vindo à Navi"; pergunta.hidden=false; opts.hidden=false; try{ history.replaceState(null,"",location.pathname); }catch{} bChat.focus(); }; }
   ov.append(box); document.body.append(ov);
   const fechar=()=>{ ov.remove(); document.removeEventListener("keydown",esc); };
+  function fecharTudo(){ fechar(); }
   const esc=e=>{ if(e.key==="Escape"){ fechar(); abrirRobo(); } };
   document.addEventListener("keydown",esc);
   bChat.onclick=()=>{ fechar(); abrirRobo(); };
   bBar.onclick=()=>{ fechar(); roboDeLado(); };
-  bChat.focus();
+  (V&&shr?shr.go:bChat).focus();
 }
 
 /* ---------- arranque ---------- */
@@ -2381,7 +2462,6 @@ syncTripLines();
 mcp={}; renderAlerts();
 /* ---------- país do cliente: moeda e vocabulário (Brasil / Portugal) ---------- */
 const EURO=new Set("PT ES FR DE IT NL BE LU IE AT FI GR SK SI EE LV LT MT CY HR".split(" "));
-let PAIS="";
 function aplicarPais(p){
   try{ const q=new URLSearchParams(location.search).get("pais"); if(q) p=q; }catch{}
   PAIS=String(p||"").toUpperCase();
