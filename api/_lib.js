@@ -205,9 +205,9 @@ async function pesquisarComAlternativas(input) {
         try { const mais = await pesquisar(niveis[2].mk(Object.assign({}, input, { flyFrom: org.code }))); const ids = new Set(itens.map(x => x.id)); mais.forEach(x => { if (!ids.has(x.id)) { x.estadiaDiferente = true; itens.push(x); } }); itens.sort((a, b) => a.price - b.price); } catch { }
       }
       const partes = [];
-      if (outra) partes.push(`A partir de ${cidade(o)} não encontrámos preços para estas datas. Mostramos voos a partir de ${cidade(org.code)}, a cerca de ${org.km} km: conte com a ligação até lá`);
-      if (nv.nome === "datas") partes.push(`${partes.length ? "e as datas" : "Para as datas exatas não encontrámos preços. Estas"} são as mais próximas, no mesmo mês`);
-      if (nv.nome === "estadia") partes.push(`${partes.length ? "e as datas e a duração da estadia" : "Para estas datas não encontrámos preços. Estas datas e estadias"} são as mais próximas que encontrámos`);
+      if (outra) partes.push(`Encontrámos os melhores preços a partir de ${cidade(org.code)}, a cerca de ${org.km} km de ${cidade(o)}: conte com a ligação até lá`);
+      if (nv.nome === "datas") partes.push(`${partes.length ? "nos" : "Comparámos os"} dias à volta da data que escolheu, no mesmo mês, e estas são as opções mais baratas`);
+      if (nv.nome === "estadia") partes.push(`${partes.length ? "com" : "Comparámos"} datas e durações de estadia parecidas com as que escolheu, e estas são as opções mais baratas`);
       itens.forEach(it => { it.approx = outra ? "origem" : "datas"; if (nv.nome !== "exato") it.approxDatas = true; });
       return { itineraries: itens, aoVivo, aviso: { tipo: outra ? "origem" : "datas", hub: outra ? org.code : null, km: org.km, texto: partes.join(", ") + "." } };
     }
