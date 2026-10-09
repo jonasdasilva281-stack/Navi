@@ -172,6 +172,9 @@
 .ex-cods i{background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .ex-tile{min-height:190px}
 @media (max-width:760px){.ex-tile{min-height:170px}.ex-tile b{font-size:20px!important}.ex-sub{font-size:11px}}
+#inspire .sec-head h2{font-family:"Plus Jakarta Sans",var(--f-display);font-weight:800;letter-spacing:-.025em}
+#inspire .sec-head p{font-family:"Plus Jakarta Sans",var(--f-body)}
+.inspire-tiles{margin-top:6px}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -2760,14 +2763,14 @@ const REGION_TILES={
   caraibas:{r:"Caraíbas",t:"Praias e ilhas",c:["CUN","PUJ","AUA","CUR","SJU"]}
 };
 (function renderTiles(){
-  const box=$("postcards");
-  Object.entries(REGION_TILES).forEach(([k,v])=>{
-    const b=el("button","postcard"); b.type="button"; b.setAttribute("aria-label",`${v.r}: ver os destinos mais baratos`);
-    const top=el("div","pc-top"); const go=el("span","pc-go"); go.innerHTML='<svg aria-hidden="true"><use href="#i-plane"/></svg>';
-    top.append(el("span","pc-region",v.r), go);
-    const codes=el("div","pc-codes"); v.c.forEach(c=>codes.append(el("span",null,c)));
-    b.append(top, el("span","pc-title",v.t), codes);
-    b.onclick=()=>{ $("e-region").value=k; document.querySelectorAll(".ex-tile").forEach(t=>t.setAttribute("aria-pressed",String(t.dataset.z===k))); showTab("explorar"); window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"}); runExplore(); };
+  const box=$("postcards"); box.className="ex-tiles inspire-tiles";
+  Object.keys(REGION_TILES).forEach(k=>{
+    const z=ZONAS.find(x=>x.id===k)||{id:k,nome:REGION_TILES[k].r,sub:REGION_TILES[k].t,g:"linear-gradient(135deg,#1d3557,#457b9d)",cods:REGION_TILES[k].c};
+    const b=el("button","ex-tile"); b.type="button"; b.style.setProperty("--g",z.g); b.setAttribute("aria-label",`${z.nome}: ver os destinos mais baratos`);
+    if(z.foto){ const u=`https://images.unsplash.com/${z.foto}?auto=format&fit=crop&w=700&q=60`; const im=new Image(); im.onload=()=>{ b.style.setProperty("--img",`url("${u}")`); b.classList.add("com-foto"); }; im.src=u; }
+    const c=el("span","ex-cods"); z.cods.forEach(x=>c.append(el("i",null,x)));
+    b.append(el("span","ex-sub",z.sub), el("b",null,z.nome), c, el("span","ex-go","Ver preços →"));
+    b.onclick=()=>{ $("e-region").value=k; document.querySelectorAll("#e-tiles .ex-tile").forEach(t=>t.setAttribute("aria-pressed",String(t.dataset.z===k))); showTab("explorar"); window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"}); runExplore(); };
     box.append(b);
   });
 })();
