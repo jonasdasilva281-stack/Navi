@@ -64,12 +64,12 @@
 .fab-msg[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.nchat.dock,.fab-msg{animation:none}}
 /* ===== Marca Navi: palavra + agulha ===== */
-.nv-word{position:relative;display:inline-flex;align-items:baseline;font-family:"Sora",var(--f-display);font-weight:700;font-size:34px;letter-spacing:-.06em;line-height:1;color:var(--navy);padding-top:14px;text-decoration:none}
+.nv-word{display:inline-flex;align-items:center;gap:10px;font-family:"Sora",var(--f-display);font-weight:700;font-size:32px;letter-spacing:-.06em;line-height:1;color:var(--navy);text-decoration:none}
 .nv-word:hover{color:var(--navy)}
 .nv-v{color:#e4572e}
-.nv-arc{position:absolute;left:0;top:-6px;width:72px;height:25px;color:var(--navy);overflow:visible}
+.nv-ico{width:38px;height:38px;flex:none}
 .ag-icon svg.nd{width:24px;height:24px;transform:none;color:#fff;fill:initial}
-@media (max-width:560px){.nv-word{font-size:30px;padding-top:13px}.nv-arc{width:64px;height:22px}}
+@media (max-width:560px){.nv-word{font-size:28px;gap:8px}.nv-ico{width:34px;height:34px}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -799,7 +799,7 @@ body{padding-block:12px 64px}
   </svg>
   <header class="band">
     <div class="topbar">
-      <p class="brand"><a class="nv-word" href="/" aria-label="Navi, página inicial"><svg class="nv-arc" viewBox="0 0 200 70" aria-hidden="true"><path d="M4 66 Q62 4 146 24" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 12"/><svg x="140" y="-2" width="60" height="60" viewBox="0 0 64 64"><g transform="rotate(45 32 32)"><path d="M32 5L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 59Z" fill="currentColor"/></g></svg></svg><span aria-hidden="true">na<span class="nv-v">v</span>i</span></a></p>
+      <p class="brand"><a class="nv-word" href="/" aria-label="Navi, página inicial"><svg class="nv-ico" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 7L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 57Z" fill="#ffffff"/><circle cx="32" cy="32" r="3.2" fill="#0b1a2c"/></g></svg><span aria-hidden="true">na<span class="nv-v">v</span>i</span></a></p>
     <nav class="tabs" role="tablist" aria-label="Secções">
       <button type="button" role="tab" id="tab-procurar" aria-controls="p-procurar" aria-selected="true">Procurar</button>
       <button type="button" role="tab" id="tab-calendario" aria-controls="p-calendario" aria-selected="false">Calendário do mês</button>
