@@ -64,12 +64,12 @@
 .fab-msg[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.nchat.dock,.fab-msg{animation:none}}
 /* ===== Marca Navi: palavra + agulha ===== */
-.nv-word{display:inline-flex;align-items:center;gap:10px;font-family:"Sora",var(--f-display);font-weight:700;font-size:32px;letter-spacing:-.06em;line-height:1;color:var(--navy);text-decoration:none}
+.nv-word{display:inline-flex;align-items:center;gap:11px;color:var(--navy);text-decoration:none;line-height:0}
 .nv-word:hover{color:var(--navy)}
-.nv-v{color:#e4572e}
+.nv-wm{height:29px;width:69.9px;display:block;margin-top:-2px}
 .nv-ico{width:38px;height:38px;flex:none}
 .ag-icon svg.nd{width:24px;height:24px;transform:none;color:#fff;fill:initial}
-@media (max-width:560px){.nv-word{font-size:28px;gap:8px}.nv-ico{width:34px;height:34px}}
+@media (max-width:560px){.nv-word{gap:9px}.nv-ico{width:34px;height:34px}.nv-wm{height:26px;width:62.6px}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -542,6 +542,7 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .wel-opt.rec{border-color:#e4572e}
 .hand-box{width:min(440px,100%);background:var(--card);color:var(--ink);border-radius:20px;padding:22px;display:grid;gap:14px;box-shadow:0 30px 60px rgba(0,0,0,.3)}
 .hand-top{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:18px}
+.hand-top .nv-ico{width:32px;height:32px}.hand-top .nv-wm{height:23px;width:55.4px}
 .hand-box h3{font-family:var(--f-display);font-size:22px;margin:0;letter-spacing:-.02em}
 .hand-box p{margin:0;line-height:1.5}
 .hand-sum{display:grid;gap:2px;background:var(--soft);border-radius:12px;padding:12px 14px}
@@ -799,7 +800,7 @@ body{padding-block:12px 64px}
   </svg>
   <header class="band">
     <div class="topbar">
-      <p class="brand"><a class="nv-word" href="/" aria-label="Navi, página inicial"><svg class="nv-ico" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 7L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 57Z" fill="#ffffff"/><circle cx="32" cy="32" r="3.2" fill="#0b1a2c"/></g></svg><span aria-hidden="true">na<span class="nv-v">v</span>i</span></a></p>
+      <p class="brand"><a class="nv-word" href="/" aria-label="Navi, página inicial"><svg class="nv-ico" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 7L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 57Z" fill="#ffffff"/><circle cx="32" cy="32" r="3.2" fill="#0b1a2c"/></g></svg><svg class="nv-wm" viewBox="0 -775 1915 795" width="70" height="29" aria-hidden="true"><path fill="currentColor" d="M0 0V-548H127V-410Q132 -433 140 -453Q161 -509 205.0 -537.0Q249 -565 312 -565H319Q415 -565 465.5 -502.5Q516 -440 516 -313V0H356V-322Q356 -366 330.0 -394.0Q304 -422 260 -422Q215 -422 187.5 -393.5Q160 -365 160 -319V0Z"/><path fill="currentColor" d="M933 0V-105Q926 -84 917 -67Q894 -28 854.5 -7.0Q815 14 758 14Q699 14 654.5 -7.0Q610 -28 585.0 -67.5Q560 -107 560 -162Q560 -222 591.0 -260.5Q622 -299 678.0 -317.5Q734 -336 807 -336H906V-338Q906 -380 886.0 -401.0Q866 -422 822 -422Q800 -422 764.0 -421.0Q728 -420 690.0 -418.0Q652 -416 621 -414V-549Q644 -551 675.0 -553.0Q706 -555 739.0 -556.0Q772 -557 801 -557Q885 -557 942.5 -533.0Q1000 -509 1030.0 -460.5Q1060 -412 1060 -336V0ZM906 -247H806Q764 -247 741.5 -226.5Q719 -206 719 -171Q719 -138 741.5 -117.5Q764 -97 806 -97Q833 -97 854.5 -106.5Q876 -116 890.0 -139.0Q904 -162 906 -203Z"/><path fill="#e4572e" d="M1246 0 1082 -548H1247L1364 -133H1387L1488 -548H1642L1500 0Z"/><path fill="currentColor" d="M1755 0V-430H1682V-548H1915V0ZM1817 -602Q1772 -602 1750.5 -625.5Q1729 -649 1729 -685Q1729 -722 1750.5 -745.5Q1772 -769 1817.0 -769.0Q1862 -769 1883.5 -745.5Q1905 -722 1905 -685Q1905 -649 1883.5 -625.5Q1862 -602 1817 -602Z"/></svg></a></p>
     <nav class="tabs" role="tablist" aria-label="Secções">
       <button type="button" role="tab" id="tab-procurar" aria-controls="p-procurar" aria-selected="true">Procurar</button>
       <button type="button" role="tab" id="tab-calendario" aria-controls="p-calendario" aria-selected="false">Calendário do mês</button>
@@ -1304,7 +1305,7 @@ function abrirReserva(href, it){
   const nome=parceiroDe(href)||"parceiro";
   const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","hand-t");
   const box=el("div","hand-box");
-  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg class="nd" aria-hidden="true"><use href="#i-needle"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
+  const top=el("div","hand-top nv-word"); top.innerHTML='<svg class="nv-ico" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 7L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 57Z" fill="#ffffff"/><circle cx="32" cy="32" r="3.2" fill="#0b1a2c"/></g></svg><svg class="nv-wm" viewBox="0 -775 1915 795" width="70" height="29" role="img" aria-label="Navi"><path fill="currentColor" d="M0 0V-548H127V-410Q132 -433 140 -453Q161 -509 205.0 -537.0Q249 -565 312 -565H319Q415 -565 465.5 -502.5Q516 -440 516 -313V0H356V-322Q356 -366 330.0 -394.0Q304 -422 260 -422Q215 -422 187.5 -393.5Q160 -365 160 -319V0Z"/><path fill="currentColor" d="M933 0V-105Q926 -84 917 -67Q894 -28 854.5 -7.0Q815 14 758 14Q699 14 654.5 -7.0Q610 -28 585.0 -67.5Q560 -107 560 -162Q560 -222 591.0 -260.5Q622 -299 678.0 -317.5Q734 -336 807 -336H906V-338Q906 -380 886.0 -401.0Q866 -422 822 -422Q800 -422 764.0 -421.0Q728 -420 690.0 -418.0Q652 -416 621 -414V-549Q644 -551 675.0 -553.0Q706 -555 739.0 -556.0Q772 -557 801 -557Q885 -557 942.5 -533.0Q1000 -509 1030.0 -460.5Q1060 -412 1060 -336V0ZM906 -247H806Q764 -247 741.5 -226.5Q719 -206 719 -171Q719 -138 741.5 -117.5Q764 -97 806 -97Q833 -97 854.5 -106.5Q876 -116 890.0 -139.0Q904 -162 906 -203Z"/><path fill="#e4572e" d="M1246 0 1082 -548H1247L1364 -133H1387L1488 -548H1642L1500 0Z"/><path fill="currentColor" d="M1755 0V-430H1682V-548H1915V0ZM1817 -602Q1772 -602 1750.5 -625.5Q1729 -649 1729 -685Q1729 -722 1750.5 -745.5Q1772 -769 1817.0 -769.0Q1862 -769 1883.5 -745.5Q1905 -722 1905 -685Q1905 -649 1883.5 -625.5Q1862 -602 1817 -602Z"/></svg>'; box.append(top);
   const h=el("h3",null,"A sua viagem está escolhida"); h.id="hand-t"; box.append(h);
   if(it&&it.outbound){ const r=it.outbound.route; const sm=el("div","hand-sum"); sm.append(el("b",null,`${r[0]} → ${r[r.length-1]} · ${money(it.price)}`), el("span",null,`Ida ${dayLabel(it.outbound.departureTime)}${it.inbound?` · regresso ${dayLabel(it.inbound.departureTime)}`:""}`)); box.append(sm); }
   box.append(el("p",null,`Para escolher o lugar, confirmar o preço final e pagar com segurança, a reserva é concluída no nosso parceiro, a ${nome}. Abre numa nova janela, com a sua pesquisa já preenchida.`));
@@ -2399,7 +2400,7 @@ function boasVindas(){
   const tag=el("p","wel-tag"); tag.innerHTML='A sua próxima viagem <em>começa aqui</em>.'; tag.setAttribute("aria-hidden","true");
   ov.append(tag, el("span","wel-cred","Foto: Unsplash"));
   const box=el("div","hand-box");
-  const top=el("div","hand-top"); const ic=el("span","ag-icon"); ic.innerHTML='<svg class="nd" aria-hidden="true"><use href="#i-needle"/></svg>'; top.append(ic, el("b",null,"navi")); box.append(top);
+  const top=el("div","hand-top nv-word"); top.innerHTML='<svg class="nv-ico" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0b1a2c"/><g transform="rotate(45 32 32)"><path d="M32 7L41.5 32L22.5 32Z" fill="#e4572e"/><path d="M22.5 32L41.5 32L32 57Z" fill="#ffffff"/><circle cx="32" cy="32" r="3.2" fill="#0b1a2c"/></g></svg><svg class="nv-wm" viewBox="0 -775 1915 795" width="70" height="29" role="img" aria-label="Navi"><path fill="currentColor" d="M0 0V-548H127V-410Q132 -433 140 -453Q161 -509 205.0 -537.0Q249 -565 312 -565H319Q415 -565 465.5 -502.5Q516 -440 516 -313V0H356V-322Q356 -366 330.0 -394.0Q304 -422 260 -422Q215 -422 187.5 -393.5Q160 -365 160 -319V0Z"/><path fill="currentColor" d="M933 0V-105Q926 -84 917 -67Q894 -28 854.5 -7.0Q815 14 758 14Q699 14 654.5 -7.0Q610 -28 585.0 -67.5Q560 -107 560 -162Q560 -222 591.0 -260.5Q622 -299 678.0 -317.5Q734 -336 807 -336H906V-338Q906 -380 886.0 -401.0Q866 -422 822 -422Q800 -422 764.0 -421.0Q728 -420 690.0 -418.0Q652 -416 621 -414V-549Q644 -551 675.0 -553.0Q706 -555 739.0 -556.0Q772 -557 801 -557Q885 -557 942.5 -533.0Q1000 -509 1030.0 -460.5Q1060 -412 1060 -336V0ZM906 -247H806Q764 -247 741.5 -226.5Q719 -206 719 -171Q719 -138 741.5 -117.5Q764 -97 806 -97Q833 -97 854.5 -106.5Q876 -116 890.0 -139.0Q904 -162 906 -203Z"/><path fill="#e4572e" d="M1246 0 1082 -548H1247L1364 -133H1387L1488 -548H1642L1500 0Z"/><path fill="currentColor" d="M1755 0V-430H1682V-548H1915V0ZM1817 -602Q1772 -602 1750.5 -625.5Q1729 -649 1729 -685Q1729 -722 1750.5 -745.5Q1772 -769 1817.0 -769.0Q1862 -769 1883.5 -745.5Q1905 -722 1905 -685Q1905 -649 1883.5 -625.5Q1862 -602 1817 -602Z"/></svg>'; box.append(top);
   const V=viagemPartilhada();
   const h=el("h3",null,V?"Partilharam esta viagem consigo":"Bem-vindo à Navi"); h.id="wel-t"; box.append(h);
   let shr=null;
