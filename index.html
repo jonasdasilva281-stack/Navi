@@ -78,6 +78,15 @@
 .sug-card b{grid-area:b;font-size:15px}
 .sug-p{grid-area:p;font-family:var(--f-display);font-weight:700;font-size:18px;color:var(--accent)}
 .sugs-live{margin-top:14px;display:grid;gap:6px}
+.shr-msg{margin:0;padding:12px 14px;background:var(--soft,#f1f4f8);border-radius:12px;font-size:14px;line-height:1.4;word-break:break-word}
+.shr-link{display:flex;gap:8px}
+.shr-link input{flex:1;min-width:0;font:inherit;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);color:var(--ink)}
+.shr-link .sel{flex:0 0 auto!important;width:auto!important;white-space:nowrap;padding:10px 16px!important;margin:0!important}
+.shr-wa{text-decoration:none!important}
+.shr-acts{display:flex;flex-wrap:wrap;gap:8px}
+.shr-acts .btn{flex:1 1 auto;justify-content:center;text-align:center}
+.shr-wa{background:#1f9d55!important;color:#fff!important;border-color:#1f9d55!important}
+.shr-close{justify-self:center}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -837,13 +846,13 @@ body{padding-block:12px 64px}
         </div>
       </div>
       <div class="sbar-grid">
-        <label class="sf sf-o" for="orig"><span>De</span><input type="text" id="orig" value="Cascavel (CAC)" autocomplete="off" placeholder="Cidade ou aeroporto"></label>
+        <label class="sf sf-o" for="orig"><span>De</span><input type="text" id="orig" value="" autocomplete="off" placeholder="Cidade ou aeroporto"></label>
         <button type="button" class="swap" id="swap" aria-label="Trocar origem e destino"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></button>
-        <label class="sf sf-d" for="dest"><span>Para</span><input type="text" id="dest" value="Lisboa (LIS)" autocomplete="off" placeholder="Cidade ou aeroporto"></label>
+        <label class="sf sf-d" for="dest"><span>Para</span><input type="text" id="dest" value="" autocomplete="off" placeholder="Cidade ou aeroporto"></label>
         <div class="sf-dates" id="flex-box">
           <label class="sf" for="w-from"><span>Partir entre</span><input type="date" id="w-from" value="2026-12-14"></label>
           <label class="sf" for="w-to"><span>e</span><input type="date" id="w-to" value="2026-12-22"></label>
-          <label class="sf stay" for="s-min" id="stay-box"><span>Ficar (dias)</span><span class="stay-in"><input type="number" id="s-min" min="1" max="90" value="40" inputmode="numeric" aria-label="Mínimo de dias"><em>a</em><input type="number" id="s-max" min="1" max="90" value="46" inputmode="numeric" aria-label="Máximo de dias"></span></label>
+          <label class="sf stay" for="s-min" id="stay-box"><span>Ficar (dias)</span><span class="stay-in"><input type="number" id="s-min" min="1" max="90" value="7" inputmode="numeric" aria-label="Mínimo de dias"><em>a</em><input type="number" id="s-max" min="1" max="90" value="14" inputmode="numeric" aria-label="Máximo de dias"></span></label>
         </div>
         <div class="sf-dates" id="exact-box" hidden>
           <label class="sf" for="ida"><span>Ida</span><input type="date" id="ida" value="2026-12-18"></label>
@@ -1305,7 +1314,7 @@ function siteLinks(f,o,d){
 let SUG=[];
 const kiwi = input => api("precos",input).then(p=>{ if(p&&p.aoVivo) LIVE=p.aoVivo; if(p&&Array.isArray(p.sugestoes)&&p.sugestoes.length) SUG=p.sugestoes; if(p&&p.aviso&&(!AVISO||AVISO.tipo==="vazio"||p.aviso.tipo==="origem")) AVISO=p.aviso; return Array.isArray(p&&p.itineraries)?p.itineraries:[]; });
 function sugTexto(g){ return g.tipo==="mes"
-  ? `${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}${g.origem&&g.origem!==code($("orig").value)?` · a partir de ${g.cidadeOrigem}`:""}`
+  ? `${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}${g.origem&&g.origem!==code($("orig").value)&&norm(g.cidadeOrigem)!==norm(cityName($("orig").value))?` · a partir de ${g.cidadeOrigem}`:""}`
   : `Para ${g.cidadeDestino} · ${dayLabel(g.ida+"T12:00:00")}${g.volta?` → ${dayLabel(g.volta+"T12:00:00")}`:""}`; }
 function usarSugestao(g){
   if(g.tipo==="destino") $("dest").value=`${g.cidadeDestino} (${g.destino})`;
@@ -2107,7 +2116,7 @@ const NC={ body:null, busy:false, ctrls:[], awaiting:null };
 function ncScroll(){ const b=NC.body; b.scrollTop=b.scrollHeight; }
 function ncRow(who){ const r=el("div","nm "+who); NC.body.append(r); return r; }
 function ncLock(){ const old=NC.ctrls; NC.ctrls=[]; old.forEach(c=>{ if(c.isConnected) try{ c.remove(); }catch{} }); NC.ctrls=[]; NC.awaiting=null; }
-function ncUser(text){ ncLock(); const r=ncRow("me"); r.append(el("div","nb",text)); ncScroll(); }
+function ncUser(text){ NC.respondeu=true; ncLock(); const r=ncRow("me"); r.append(el("div","nb",text)); ncScroll(); }
 function ncTyping(ms){ return new Promise(res=>{ if(REDUCED||!ms){ res(); return; } const r=ncRow("bot typing"); const b=el("div","nb"); b.append(el("i"),el("i"),el("i")); r.append(b); ncScroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
 // Ritmo humano: uma mensagem de cada vez, "a escrever…" proporcional ao tamanho, e uma pausa entre mensagens.
 const ncPausa=ms=>new Promise(r=>setTimeout(r,REDUCED?0:ms));
@@ -2119,7 +2128,7 @@ async function ncSay1(text, ms){
   await ncPausa(350); await ncTyping(t); const r=ncRow("bot"); const b=el("div","nb"); if(typeof text==="string") b.textContent=text; else b.append(text); r.append(b); ncScroll(); return b; }
 function ncCtrl(node){ const r=el("div","nm ctrl"); r.append(node); NC.ctrls.push(r); const g=NC.gen;
   const p=ncFila.then(()=>ncPausa(300)).then(()=>{ if(g!==NC.gen||!NC.ctrls.includes(r)) return; NC.body.append(r); r.classList.add("aparece"); ncScroll();
-    const i=r.querySelector('input[type="text"]'); if(i&&!matchMedia("(max-width:760px)").matches) try{ i.focus({preventScroll:true}); }catch{} });
+    const i=r.querySelector('input[type="text"]'); if(i&&!matchMedia("(max-width:760px)").matches) try{ i.focus({preventScroll:true}); i.select(); }catch{} });
   ncFila=p.catch(()=>{}); return r; }
 function ncChips(opts){ const w=el("div","nchips"); opts.forEach(o=>{ const b=el("button","nchip"+(o.primary?" pri":""),o.t); b.type="button"; b.onclick=()=>o.fn(); w.append(b); }); return w; }
 function ncField(label, input){ const l=el("label","sf"); l.append(el("span",null,label), input); return l; }
@@ -2132,7 +2141,7 @@ function ncAskCity(kind){
     const inp=el("input"); inp.type="text"; inp.id="nc-"+kind; inp.placeholder="Cidade ou aeroporto"; inp.value=main.value||"";
     const box=el("div","nform"); const f=ncField(isO?"De":"Para",inp); box.append(f);
     const go=el("button","nbtn","Continuar"); go.type="button"; box.append(go);
-    const chips=isO?(main.value?[{t:main.value,fn:()=>accept(main.value)}]:[]):NAVI_POP_DEST.filter(x=>x!==$("orig").value).slice(0,5).map(x=>({t:cityName(x),fn:()=>accept(x)}));
+    const chips=isO?(main.value?[{t:main.value,fn:()=>accept(main.value)}]:(PAIS==="BR"?["São Paulo (GRU)","Rio de Janeiro (GIG)","Brasília (BSB)"]:PAIS==="PT"?["Lisboa (LIS)","Porto (OPO)","Faro (FAO)"]:["Lisboa (LIS)","São Paulo (GRU)","Porto (OPO)"]).map(x=>({t:cityName(x),fn:()=>accept(x)}))):NAVI_POP_DEST.filter(x=>x!==$("orig").value).slice(0,5).map(x=>({t:cityName(x),fn:()=>accept(x)}));
     if(chips.length) box.append(ncChips(chips));
     ncCtrl(box); attachSuggest(inp); setTimeout(()=>{ try{ inp.focus({preventScroll:true}); inp.select(); }catch{} },50);
     let feito=false;
@@ -2257,12 +2266,16 @@ async function ncAskEdit(){
 }
 NC.queue=[];
 function ncNext(){
+  // Só avança depois de o cliente responder à pergunta atual (evita perguntas duplicadas ou fora de ordem).
+  if(NC.respondeu===false) return;
   const k=NC.queue.shift();
   if(!k) return;
+  NC.respondeu=false;
   ({orig:()=>ncAskCity("orig"), dest:()=>ncAskCity("dest"), type:ncAskType, mode:ncAskDateMode, dates:ncAskDates, pax:ncAskPax, prefs:ncAskPrefs, confirm:ncConfirm})[k]();
 }
 async function ncStart(fresh){
   NC.gen=(NC.gen||0)+1; ncFila=Promise.resolve(); NC.ctrls=[];
+  NC.respondeu=true;
   NC.body.replaceChildren(); NC.ctrls=[];
   await ncSay("Olá! Sou a Navi, o seu agente de voos. A minha missão é encontrar-lhe o bilhete mais barato, com o preço final e sem surpresas.",300);
   await ncSay(AI?"Pode escrever tudo de uma vez na caixa em baixo, ou responder às minhas perguntas.":"Vou fazer-lhe algumas perguntas rápidas. Responda com os botões ou escreva na caixa em baixo.",500);
@@ -2304,7 +2317,8 @@ document.addEventListener("navi:done",async e=>{
   if(!d.cheapest){
     if(d.f && d.f.stops==="0" && !d.error){
       await ncSay("Não encontrei voos diretos nesta rota para estas datas. Com 1 escala há várias opções e normalmente bem mais baratas. Quer que procure com 1 escala?",300);
-      ncCtrl(ncChips([{t:"Sim, aceito 1 escala",primary:true,fn:()=>{ ncUser("Sim, aceito 1 escala"); NC.profile.stops="1"; $("stops").value="1"; run(); }},{t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }}]));
+      if(SUG.length) await ncSay(`Noutras datas há voos diretos: o mais barato sai ${sugTexto(SUG[0]).replace(/^Para /,"para ")}, desde ${money(SUG[0].preco)}.`,300);
+      ncCtrl(ncChips(SUG.slice(0,2).map(g=>({t:`${sugTexto(g)} · ${money(g.preco)}`,fn:()=>{ ncUser(sugTexto(g)); usarSugestao(g); }})).concat([{t:"Sim, aceito 1 escala",primary:true,fn:()=>{ ncUser("Sim, aceito 1 escala"); NC.profile.stops="1"; $("stops").value="1"; run(); }},{t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["dates","confirm"]; ncNext(); }}].concat(LIVE?[{t:"Ver preços de hoje, ao vivo",fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); abrirReserva(LIVE,null); }}]:[]))));
       return;
     }
     await ncSay(d.error?`Não consegui procurar: ${d.error}`:((AVISO&&AVISO.texto)||"Não encontrei voos com estas condições. Quer alargar as datas, aceitar mais escalas ou tentar outro aeroporto?"),300);
@@ -2401,9 +2415,32 @@ function partilharViagem(it){
   const q=new URLSearchParams({de:o,para:d,on,dn,ida}); if(volta) q.set("volta",volta); q.set("p",String(Math.round(it.price))); q.set("m",CUR); q.set("v",new Date().toISOString().slice(0,10));
   const url=location.origin+"/?"+q.toString();
   const texto=`✈️ ${on} → ${dn} por ${money(it.price)}${volta?" (ida e volta)":""}, com taxas incluídas. Encontrei na Navi, veja se ainda está a este preço:`;
-  if(navigator.share){ navigator.share({title:"Navi",text:texto,url}).catch(()=>{}); return; }
+  janelaPartilha(texto,url,`${on} → ${dn}`);
+}
+function copiarTexto(t){
+  if(navigator.clipboard&&window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise((res,rej)=>{ const ta=el("textarea"); ta.value=t; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;opacity:0;top:0"; document.body.append(ta); ta.select(); try{ document.execCommand("copy")?res():rej(); }catch(e){ rej(e); } ta.remove(); });
+}
+function janelaPartilha(texto,url,titulo){
   const tudo=texto+" "+url;
-  (navigator.clipboard?navigator.clipboard.writeText(tudo):Promise.reject()).then(()=>toast("Link copiado. Cole-o no WhatsApp, Instagram ou onde quiser."),()=>{ window.prompt("Copie este link:",tudo); });
+  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","shr-t");
+  const box=el("div","hand-box");
+  const h=el("h3",null,"Partilhar esta viagem"); h.id="shr-t"; box.append(h);
+  box.append(el("p","shr-msg",texto));
+  const linha=el("div","shr-link"); const inp=el("input"); inp.type="text"; inp.readOnly=true; inp.value=url; inp.setAttribute("aria-label","Link da viagem"); inp.onfocus=()=>inp.select();
+  const bc=el("button","sel","Copiar link"); bc.type="button";
+  bc.onclick=()=>copiarTexto(url).then(()=>{ bc.textContent="Copiado ✓"; setTimeout(()=>bc.textContent="Copiar link",2200); },()=>{ inp.focus(); inp.select(); toast("Selecione o link e copie."); });
+  linha.append(inp,bc); box.append(linha);
+  const acts=el("div","shr-acts");
+  const wa=el("a","btn shr-wa","WhatsApp"); wa.href="https://wa.me/?text="+encodeURIComponent(tudo); wa.target="_blank"; wa.rel="noopener"; wa.dataset.ok="1";
+  const cm=el("button","btn","Copiar mensagem"); cm.type="button"; cm.onclick=()=>copiarTexto(tudo).then(()=>{ cm.textContent="Mensagem copiada ✓"; setTimeout(()=>cm.textContent="Copiar mensagem",2200); },()=>{});
+  acts.append(wa,cm);
+  if(navigator.share){ const mo=el("button","btn","Mais opções…"); mo.type="button"; mo.onclick=()=>navigator.share({title:"Navi · "+titulo,text:texto,url}).catch(()=>{}); acts.append(mo); }
+  box.append(acts);
+  const fechar=el("button","btn shr-close","Fechar"); fechar.type="button"; box.append(fechar);
+  ov.append(box); document.body.append(ov);
+  const close=()=>{ ov.remove(); document.removeEventListener("keydown",esc); }; const esc=e=>{ if(e.key==="Escape") close(); };
+  fechar.onclick=close; ov.addEventListener("click",e=>{ if(e.target===ov) close(); }); document.addEventListener("keydown",esc); bc.focus();
 }
 function viagemPartilhada(){
   let q; try{ q=new URLSearchParams(location.search); }catch{ return null; }
@@ -2518,6 +2555,9 @@ fetch("airports.json").then(r=>r.json()).then(d=>{ AIR=d; d.forEach(a=>{ AIRMAP[
 const startHash=(location.hash||"").slice(1); if(TABS.includes(startHash)) showTab(startHash);
 syncTripLines();
 mcp={}; renderAlerts();
+/* ---------- datas por defeito: a partir de hoje (daqui a um mês, 7 a 14 dias) ---------- */
+(function datasPadrao(){ try{ const h=isoOf(today()); const set=(id,v)=>{ const e=$(id); if(e){ e.value=v; e.min=h; } };
+  set("w-from",addDays(h,30)); set("w-to",addDays(h,44)); set("ida",addDays(h,30)); set("volta",addDays(h,40)); }catch{} })();
 /* ---------- país do cliente: moeda e vocabulário (Brasil / Portugal) ---------- */
 const EURO=new Set("PT ES FR DE IT NL BE LU IE AT FI GR SK SI EE LV LT MT CY HR".split(" "));
 function aplicarPais(p){
