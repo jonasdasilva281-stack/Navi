@@ -132,6 +132,9 @@
 .av-live .av-b{font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:999px;background:var(--accent);border:0;color:#fff!important;text-decoration:none!important;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(228,87,46,.28);transition:transform .15s,box-shadow .15s}
 .av-live .av-b.alt{background:#0b1a2c;box-shadow:0 6px 16px rgba(11,26,44,.25)}
 .av-live .av-b:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(13,27,42,.22)}
+.mapa-precos{display:grid;gap:12px;margin-bottom:24px}
+.mp-box{min-height:420px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.mp-box iframe{width:100%!important;display:block}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1020,6 +1023,10 @@ body{padding-block:12px 64px}
 
   <!-- ===================== EXPLORAR ===================== -->
   <div class="panel" id="p-explorar" role="tabpanel" aria-labelledby="tab-explorar" hidden>
+    <section class="mapa-precos" aria-labelledby="mp-t">
+      <div class="sec-head"><h2 id="mp-t">Para onde voar barato</h2><p id="mp-sub">Os preços mais baixos a partir da sua cidade, no mapa. Toque num destino para ver os voos.</p></div>
+      <div class="mp-box" id="mp-box"><p class="note">A carregar o mapa…</p></div>
+    </section>
     <form class="card search" id="fe" novalidate>
       <p class="trip-line" id="e-trip"></p>
       <div class="q">
@@ -1265,6 +1272,7 @@ function startLive(f, sPicks){
 const TABS=["procurar","calendario","explorar","alertas","favoritos"];
 function showTab(name){
   TABS.forEach(t=>{ const on=t===name; $("tab-"+t).setAttribute("aria-selected",on); $("p-"+t).hidden=!on; });
+  if(name==="explorar") mapaPrecos();
   if(name!=="procurar") syncTripLines();
   try{ history.replaceState(null,"","#"+name); }catch{}
 }
@@ -1415,6 +1423,24 @@ function completarViagem(destino){
     a.append(i,t); g.append(a); });
   s.append(g); s.append(el("p","note","A Navi pode receber uma comissão destes parceiros, sem custo extra para si.")); return s;
 }
+/* ---------- mapa de preços (widget da Travelpayouts / Aviasales) ---------- */
+let MP_ORIG=null;
+function mapaPrecos(){
+  const box=$("mp-box"); if(!box) return;
+  let o=code($("orig").value);
+  const CIDADE={GRU:"SAO",CGH:"SAO",VCP:"SAO",GIG:"RIO",SDU:"RIO",LHR:"LON",LGW:"LON",CDG:"PAR",ORY:"PAR",JFK:"NYC",EWR:"NYC",HND:"TYO",NRT:"TYO",FCO:"ROM",MXP:"MIL",EZE:"BUE"};
+  if(!o) o=PAIS==="BR"?"SAO":"LIS";
+  const a=AIRMAP&&AIRMAP[o]; const cod=CIDADE[o]||o;
+  if(MP_ORIG===cod+CUR) return; MP_ORIG=cod+CUR;
+  const lat=a?a[4]:(cod==="SAO"?-23.55:38.72), lng=a?a[5]:(cod==="SAO"?-46.63:-9.14);
+  $("mp-sub").textContent=`Os preços mais baixos a partir de ${cityName($("orig").value)||(cod==="SAO"?"São Paulo":"Lisboa")}, no mapa. Toque num destino para ver os voos.`;
+  box.replaceChildren();
+  const w=Math.max(300,Math.min(1200,box.clientWidth||900)), h=window.innerWidth<700?420:520;
+  const q=new URLSearchParams({currency:(CUR||"EUR").toLowerCase(),trs:"583106",shmarker:TPCFG.marker||"787293",lat:String(lat),lng:String(lng),powered_by:"false",search_host:"www.aviasales.com/search",locale:"pt",origin:cod,value_min:"0",value_max:"1000000",round_trip:"true",only_direct:"false",radius:"1",draggable:"true",disable_zoom:"false",show_logo:"false",scrollwheel:"false",primary:"#0b1a2c",secondary:"#e4572e",light:"#ffffff",width:String(w),height:String(h),zoom:"3",promo_id:"4054",campaign_id:"100"});
+  const sc=document.createElement("script"); sc.async=true; sc.charset="utf-8"; sc.src="https://tpemb.com/content?"+q.toString();
+  box.append(sc);
+}
+
 /* ---------- passagem para o pagamento no parceiro ---------- */
 const PARCEIROS=[["aviasales","Aviasales"],["kiwi.tpo.lv","Kiwi.com"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
 function parceiroDe(href){ const h=String(href||"").toLowerCase(); const m=PARCEIROS.find(([k])=>h.includes(k)); return m?m[1]:null; }
