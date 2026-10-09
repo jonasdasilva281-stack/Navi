@@ -1024,10 +1024,6 @@ body{padding-block:12px 64px}
 
   <!-- ===================== EXPLORAR ===================== -->
   <div class="panel" id="p-explorar" role="tabpanel" aria-labelledby="tab-explorar" hidden>
-    <section class="mapa-precos" aria-labelledby="mp-t">
-      <div class="sec-head"><h2 id="mp-t">Para onde voar barato</h2><p id="mp-sub">Os preços mais baixos a partir da sua cidade, no mapa. Toque num destino para ver os voos.</p></div>
-      <div class="mp-box" id="mp-box"><p class="note">A carregar o mapa…</p></div>
-    </section>
     <form class="card search" id="fe" novalidate>
       <p class="trip-line" id="e-trip"></p>
       <div class="q">
@@ -1273,7 +1269,6 @@ function startLive(f, sPicks){
 const TABS=["procurar","calendario","explorar","alertas","favoritos"];
 function showTab(name){
   TABS.forEach(t=>{ const on=t===name; $("tab-"+t).setAttribute("aria-selected",on); $("p-"+t).hidden=!on; });
-  if(name==="explorar") mapaPrecos();
   if(name!=="procurar") syncTripLines();
   try{ history.replaceState(null,"","#"+name); }catch{}
 }
