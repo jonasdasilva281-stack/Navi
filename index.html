@@ -90,6 +90,13 @@
 .shr-acts .btn{flex:1 1 auto;justify-content:center;text-align:center}
 .shr-wa{background:#1f9d55!important;color:#fff!important;border-color:#1f9d55!important}
 .shr-close{justify-self:center}
+.cv{display:grid;gap:12px;margin-top:8px}
+.cv-t{margin:0;font-family:var(--f-display);font-size:20px;letter-spacing:-.01em}
+.cv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.cv-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);text-decoration:none;transition:border-color .15s,transform .15s}
+.cv-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.cv-i{flex:none;width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center}
+.cv-tx{display:grid;gap:2px}.cv-tx b{font-size:15px}.cv-tx small{color:var(--muted);font-size:13px}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -1343,6 +1350,20 @@ function noResultsActions(host){
   const b2=el("button","btn","Mudar escalas"); b2.type="button"; b2.onclick=()=>{ ncUser&&ncUser("Mudar escalas"); NC.queue=["prefs","confirm"]; ncNext(); abrirRobo(); };
   w.append(b1,b2); host.append(w);
 }
+/* ---------- completar a viagem: parceiros extra (links de afiliado públicos) ---------- */
+const EXTRAS=[
+  {id:"klook", titulo:d=>`Passeios e bilhetes${d?` em ${d}`:""}`, sub:"Atrações, museus, tours e transportes no destino", parceiro:"Klook", url:"https://klook.tpo.lv/eX0nOuKJ",
+   icone:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 4v5h18v-5a2 2 0 0 1 0-4V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>'}
+];
+function completarViagem(destino){
+  const s=el("section","cv"); s.append(el("h3","cv-t","Complete a sua viagem"));
+  const g=el("div","cv-grid");
+  EXTRAS.forEach(x=>{ const a=el("a","cv-card"); a.href=x.url; a.target="_blank"; a.rel="noopener sponsored"; a.dataset.ok="1";
+    const i=el("span","cv-i"); i.innerHTML=x.icone; i.setAttribute("aria-hidden","true");
+    const t=el("span","cv-tx"); t.append(el("b",null,x.titulo(destino)), el("small",null,`${x.sub} · no site da ${x.parceiro} ↗`));
+    a.append(i,t); g.append(a); });
+  s.append(g); s.append(el("p","note","A Navi pode receber uma comissão destes parceiros, sem custo extra para si.")); return s;
+}
 /* ---------- passagem para o pagamento no parceiro ---------- */
 const PARCEIROS=[["aviasales","Aviasales"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
 function parceiroDe(href){ const h=String(href||"").toLowerCase(); const m=PARCEIROS.find(([k])=>h.includes(k)); return m?m[1]:null; }
@@ -1737,6 +1758,7 @@ async function run(){
   const sDates=el("section"); sDates.hidden=true; M.append(sDates);
   const listHost=el("section"); M.append(listHost); listHost.append(loader());
   const incl=el("p","incl"); incl.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>'; incl.append(el("span",null,`Preços totais estimados, com taxas, para todos os passageiros, encontrados nas últimas 48 horas. A bagagem incluída e o preço final confirmam-se no site de compra, antes de pagar.`)); M.append(incl);
+  M.append(completarViagem(destN));
   const extras=el("div","extras"); M.append(extras);
   const group=(title,subt)=>{ const d=el("details"); const sm=el("summary"); const t=el("span"); t.append(el("b",null,title)); if(subt){ t.append(el("br")); t.append(el("small",null,subt)); } sm.append(t); d.append(sm); extras.append(d); const sec=section(d,title); sec.append(loader()); return {d,sec,sm,t}; };
   const VIEW=createView(listHost, side); window.__VIEW=VIEW;
@@ -2353,6 +2375,7 @@ document.addEventListener("navi:done",async e=>{
   ncCtrl(ncChips([
     {t:"Ver todas as opções",primary:true,fn:()=>mostrarResultados(`Recomendo ${rec.outbound.route[0]} → ${rec.outbound.route[rec.outbound.route.length-1]} por ${money(rec.price)}. Toque aqui para falar comigo.`)},
     {t:"Partilhar com alguém",fn:()=>{ ncUser("Partilhar com alguém"); partilharViagem(rec); }},
+    {t:`Passeios em ${cityName($("dest").value)}`,fn:()=>{ ncUser(`Passeios em ${cityName($("dest").value)}`); window.open(EXTRAS[0].url,"_blank","noopener"); ncSay(`Abri a Klook numa nova janela, com passeios, museus e bilhetes para ${cityName($("dest").value)}.`,200); }},
     {t:"Guardar nos favoritos",fn:()=>{ ncUser("Guardar nos favoritos"); if(!isFav(rec)) toggleFav(rec); ncSay("Guardado. Encontra-o no separador Favoritos.",200); }},
     {t:"Mudar escalas ou prioridade",fn:()=>{ ncUser("Quero mudar as escalas ou a prioridade"); NC.queue=["prefs","confirm"]; ncNext(); }},
     {t:"Nova pesquisa",fn:()=>{ ncUser("Nova pesquisa"); ncStart(); }}
