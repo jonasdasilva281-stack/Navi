@@ -175,6 +175,28 @@
 #inspire .sec-head h2{font-family:"Plus Jakarta Sans",var(--f-display);font-weight:800;letter-spacing:-.025em}
 #inspire .sec-head p{font-family:"Plus Jakarta Sans",var(--f-body)}
 .inspire-tiles{margin-top:6px}
+/* ===== Hero profissional ===== */
+.hero2{gap:14px!important;padding:6px 0 4px}
+.h2-kicker{font-family:"Plus Jakarta Sans",var(--f-body);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#ffb39e}
+.hero2 h1{font-family:"Plus Jakarta Sans",var(--f-display)!important;font-weight:800!important;font-size:clamp(30px,4.6vw,48px)!important;letter-spacing:-.035em!important;line-height:1.05!important;margin:0;max-width:18ch}
+.hero2 h1 span{color:#ff9a7e}
+.hero2 .lead{font-family:"Plus Jakarta Sans",var(--f-body);font-size:17px!important;line-height:1.5;color:#c3d0e0!important;max-width:56ch}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.cta{display:inline-flex;align-items:center;gap:8px;font-family:"Plus Jakarta Sans",var(--f-body);font-size:15px;font-weight:700;border-radius:999px;padding:12px 20px;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:transform .15s,box-shadow .15s,background .15s}
+.cta svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cta.pri{background:#e4572e;color:#fff;box-shadow:0 10px 24px rgba(228,87,46,.35)}
+.cta.pri:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(228,87,46,.45)}
+.cta.sec{background:#fff;color:#0b1a2c}
+.cta.sec:hover{transform:translateY(-1px)}
+.cta.cta-ghost{background:rgba(255,255,255,.06);color:#e6eef8;border-color:rgba(255,255,255,.22)}
+.cta.cta-ghost:hover{background:rgba(255,255,255,.12)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 0 rgba(47,191,113,.6);animation:livep 2s infinite}
+@keyframes livep{0%{box-shadow:0 0 0 0 rgba(47,191,113,.6)}70%{box-shadow:0 0 0 8px rgba(47,191,113,0)}100%{box-shadow:0 0 0 0 rgba(47,191,113,0)}}
+.trust{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-family:"Plus Jakarta Sans",var(--f-body);font-size:13px;font-weight:600;color:#b8c6d8}
+.trust li{display:inline-flex;align-items:center;gap:6px}
+.trust svg{width:16px;height:16px;fill:none;stroke:#2fbf71;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:560px){.hero2 .lead{font-size:15.5px!important}.cta{flex:1 1 auto;justify-content:center;padding:12px 16px}.cta.cta-ghost{flex-basis:100%}}
+@media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
 </style>
 <!-- Travelpayouts: verificação do site -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
@@ -917,11 +939,20 @@ body{padding-block:12px 64px}
       <button type="button" role="tab" id="tab-favoritos" aria-controls="p-favoritos" aria-selected="false">Favoritos<span class="count" id="fav-count" hidden>0</span></button>
     </nav>
     </div>
-    <div class="band-head">
-      <h1>O seu agente de <em>voos baratos</em>.</h1>
-      <p class="lead">Converse com a Navi: ela faz as perguntas certas, compara companhias, datas e aeroportos e mostra-lhe o preço com taxas incluídas.</p>
-      <button type="button" class="bar-toggle" id="bar-toggle" aria-expanded="false" aria-controls="f">Prefiro a barra de pesquisa</button>
-      <a class="bar-toggle" href="/voos.html" id="ao-vivo-link">Pesquisa ao vivo ✦</a>
+    <div class="band-head hero2">
+      <span class="h2-kicker">Comparador de voos para o Brasil e Portugal</span>
+      <h1>Voos mais baratos, <span>sem surpresas.</span></h1>
+      <p class="lead">A Navi compara companhias, datas e aeroportos e mostra-lhe o preço final, com taxas incluídas.</p>
+      <div class="hero-ctas">
+        <button type="button" class="cta pri" id="hero-chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Falar com a Navi</button>
+        <button type="button" class="cta sec" id="bar-toggle" aria-expanded="false" aria-controls="f"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>Pesquisar voos</button>
+        <a class="cta cta-ghost" href="/voos.html" id="ao-vivo-link"><span class="live-dot" aria-hidden="true"></span>Preços ao vivo</a>
+      </div>
+      <ul class="trust">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Preço final com taxas</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Todas as companhias</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sem custos extra para si</li>
+      </ul>
     </div>
     <form class="sbar" id="f" novalidate hidden>
       <div class="sbar-opts">
@@ -2586,8 +2617,9 @@ document.addEventListener("navi:agent",async e=>{ const {res,cheapest}=e.detail;
   NC.body=$("nc-body");
   $("nc-form").addEventListener("submit",e=>{ e.preventDefault(); const t=$("nc-text").value.trim(); if(!t) return; $("nc-text").value=""; ncFreeText(t); });
   $("nc-reset").onclick=()=>ncStart();
+  { const hc=$("hero-chat"); if(hc) hc.onclick=()=>abrirRobo(); }
   { const c=$("nchat"); document.body.append(c); c.classList.add("dock"); c.setAttribute("role","dialog"); $("nc-min").onclick=()=>minimizarRobo(); }
-  $("bar-toggle").onclick=()=>{ const f=$("f"); f.hidden=!f.hidden; $("bar-toggle").setAttribute("aria-expanded",String(!f.hidden)); $("bar-toggle").textContent=f.hidden?"Prefiro a barra de pesquisa":"Esconder a barra de pesquisa"; };
+  $("bar-toggle").onclick=()=>{ const f=$("f"); f.hidden=!f.hidden; $("bar-toggle").setAttribute("aria-expanded",String(!f.hidden)); $("bar-toggle").lastChild.textContent=f.hidden?"Pesquisar voos":"Fechar pesquisa"; };
   $("swap").onclick=()=>{ const o=$("orig").value; $("orig").value=$("dest").value; $("dest").value=o; updateHeroPass(); };
   new MutationObserver(()=>{ const t=$("note").textContent.trim(); if(!$("f").hidden||!t||/^(Preços da Aviasales)/.test(t)) return; ncSay(t,0); }).observe($("note"),{childList:true,characterData:true,subtree:true});
   boasVindas();
