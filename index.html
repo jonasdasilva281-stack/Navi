@@ -211,6 +211,14 @@
 .nv-rodape{max-width:1180px;margin:32px auto 0;padding:0 4px 24px;font-size:11.5px;color:#8a95a3;line-height:1.5;text-align:center}
 .nv-rodape p{margin:0}
 /* avião a voar no chat enquanto procura */
+.nbest{display:grid;gap:8px;width:100%;max-width:420px}
+.nbest-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
+.nbest-opt:hover,.nbest-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
+.nbest-opt.top{border-color:#e4572e;background:linear-gradient(0deg,rgba(228,87,46,.06),rgba(228,87,46,.06)),var(--card)}
+.nbest-opt .nb-d{display:grid;gap:2px;min-width:0}.nbest-opt .nb-d b{font-size:15px;line-height:1.25}.nbest-opt .nb-d small{color:var(--muted);font-size:12.5px}
+.nbest-opt .nb-p{display:grid;justify-items:end;gap:2px;flex:none}.nbest-opt .nb-p b{font-size:18px;color:#e4572e}
+.nb:has(> .nbest){background:none;border:0;padding:0;box-shadow:none;max-width:100%;width:100%}
+.nbest-opt .nb-d em{justify-self:start;margin-bottom:2px;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#137a43;background:#e7f7ee;border-radius:999px;padding:2px 8px}
 .nm.voo .voo-anim{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px;display:grid;gap:4px;min-width:240px}
 .va-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
 .va-row b{font-family:"Plus Jakarta Sans",var(--f-display);font-weight:800;font-size:15px;color:var(--navy)}
@@ -2510,10 +2518,67 @@ async function ncAskType(){
   ncCtrl(ncChips([{t:"Ida e volta",primary:$("t-rt").checked,fn:()=>{ $("t-rt").checked=true; updateDateUI(); ncUser("Ida e volta"); ncNext(); }},{t:"Só ida",primary:$("t-ow").checked,fn:()=>{ $("t-ow").checked=true; updateDateUI(); ncUser("Só ida"); ncNext(); }}]));
 }
 async function ncAskDateMode(){
-  await ncSay("As datas são certas ou tem alguma flexibilidade? Com datas flexíveis costumo encontrar preços bem mais baixos.");
-  ncCtrl(ncChips([{t:"Sou flexível",primary:true,fn:()=>{ $("d-flex").checked=true; updateDateUI(); ncUser("Sou flexível"); ncNext(); }},{t:"Tenho datas certas",fn:()=>{ $("d-exact").checked=true; updateDateUI(); ncUser("Tenho datas certas"); ncNext(); }}]));
+  await ncSay("Quer que lhe mostre os dias mais baratos para viajar? Se tiver alguma flexibilidade nas datas, comparo o mês inteiro e mostro-lhe as melhores datas.");
+  ncCtrl(ncChips([{t:"Sim, mostre-me as datas mais baratas",primary:true,fn:()=>{ $("d-flex").checked=true; NC.flexForm=false; updateDateUI(); ncUser("Sim, mostre-me as datas mais baratas"); ncNext(); }},{t:"Tenho datas certas",fn:()=>{ $("d-exact").checked=true; updateDateUI(); ncUser("Tenho datas certas"); ncNext(); }}]));
+}
+/* Datas flexíveis: a Navi compara o mês inteiro e mostra as melhores datas para o cliente escolher. */
+async function ncFlexMelhores(){
+  const rt=$("t-rt").checked, t=today();
+  const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+  const nomeMes=d=>cap(MESL[d.getMonth()])+(d.getFullYear()!==t.getFullYear()?" "+d.getFullYear():"");
+  const meses=[]; for(let k=0;k<6;k++) meses.push(new Date(t.getFullYear(),t.getMonth()+k,1));
+  const intervalo={t:"Prefiro indicar um intervalo de dias",ghost:true,fn:()=>{ ncUser("Prefiro indicar um intervalo de dias"); NC.flexForm=true; ncAskDates(); }};
+  const certas={t:"Afinal tenho datas certas",ghost:true,fn:()=>{ ncUser("Afinal tenho datas certas"); $("d-exact").checked=true; updateDateUI(); ncAskDates(); }};
+  async function pedirMes(txt){
+    await ncSay(txt||"Ótimo! Em que mês gostaria de viajar? Eu comparo todos os dias desse mês e mostro-lhe os mais baratos.");
+    ncCtrl(ncChips(meses.map(d=>({t:nomeMes(d),fn:()=>{ ncUser(nomeMes(d)); escolherMes(d); }})).concat([intervalo])));
+  }
+  async function escolherMes(d){
+    if(!rt) return buscar(d,null,null);
+    await ncSay("E quanto tempo quer ficar?");
+    const op=[["Fim de semana (2 a 4 noites)",2,4],["Uma semana (5 a 9 noites)",5,9],["Duas semanas (10 a 16 noites)",10,16],["Mais tempo (17 a 30 noites)",17,30]];
+    ncCtrl(ncChips(op.map(([l,a,b],i)=>({t:l,primary:i===1,fn:()=>{ ncUser(l); buscar(d,a,b); }}))));
+  }
+  async function buscar(d,nMin,nMax){
+    const ini0=new Date(Math.max(d.getTime(), t.getTime()+86400000)); const fim=new Date(d.getFullYear(),d.getMonth()+1,0);
+    const mesTxt=MESL[d.getMonth()];
+    await ncSay(`Vou comparar todos os dias de ${mesTxt} para encontrar as melhores datas.`,300);
+    const f=form(); const v=el("div","voo-anim");
+    v.innerHTML=`<div class="va-row"><b>${code(f.orig)||""}</b><svg viewBox="0 0 220 60" aria-hidden="true"><path class="va-arc" d="M10 50 Q110 -6 210 50" fill="none" stroke-width="2.4" stroke-dasharray="3 7" stroke-linecap="round"/><g class="va-plane"><path d="M0-7L6 7L0 3.5L-6 7Z" transform="rotate(90)"/></g></svg><b>${code(f.dest)||""}</b></div><span class="va-txt">A comparar os dias de ${mesTxt}…</span>`;
+    const anim=ncRow("bot voo"); anim.append(v); ncScroll();
+    const input=kiwiInput(Object.assign({},f,{ad:1,ch:0,rt:false,volta:""}),{departureDate:dmy(isoOf(ini0)),departureDateTo:dmy(isoOf(fim))});
+    delete input.returnDate; delete input.max_sector_stopovers; delete input.stopover_to;
+    if(rt){ input.nights_in_dst_from=nMin; input.nights_in_dst_to=nMax; }
+    let lista=[]; try{ const r=await api("precos",input); lista=Array.isArray(r&&r.itineraries)?r.itineraries:[]; }catch{}
+    anim.remove();
+    const ymd=x=>String(x||"").slice(0,10);
+    const noites=it=>it.inbound?Math.round((pdate(ymd(it.inbound.departureTime))-pdate(ymd(it.outbound.departureTime)))/86400000):0;
+    lista=lista.filter(it=>{ const dep=ymd(it.outbound.departureTime); if(dep<isoOf(ini0)||dep>isoOf(fim)) return false; if(rt){ if(!it.inbound) return false; const n=noites(it); return n>=nMin&&n<=nMax; } return !it.inbound; });
+    const porData=new Map(); lista.forEach(it=>{ const k=ymd(it.outbound.departureTime)+"|"+(it.inbound?ymd(it.inbound.departureTime):""); const p=it.unitPrice||it.price; if(!porData.has(k)||p<porData.get(k).p) porData.set(k,{it,p}); });
+    const melhores=[...porData.values()].sort((a,b)=>a.p-b.p).slice(0,5);
+    if(!melhores.length){
+      await ncSay(`Ainda não tenho preços guardados para ${mesTxt} nesta rota. Quer experimentar outro mês, ou indicar as datas?`,300);
+      ncCtrl(ncChips(meses.filter(m=>m.getMonth()!==d.getMonth()).slice(0,4).map(m=>({t:nomeMes(m),fn:()=>{ ncUser(nomeMes(m)); escolherMes(m); }})).concat([intervalo,certas])));
+      return;
+    }
+    const caro=Math.max(...[...porData.values()].map(x=>x.p));
+    await ncSay(`Estas são as melhores datas de ${mesTxt}, da mais barata para a mais cara (preço por pessoa${rt?", ida e volta":""}):`,300);
+    const box=el("div","nbest");
+    melhores.forEach((m,i)=>{ const it=m.it, dep=ymd(it.outbound.departureTime), ret=it.inbound?ymd(it.inbound.departureTime):"";
+      const b=el("button","nbest-opt"+(i===0?" top":"")); b.type="button";
+      const l=el("span","nb-d"); if(i===0) l.append(el("em",null,"Melhor preço")); l.append(el("b",null,dayLabel(dep)+(ret?" → "+dayLabel(ret):"")), el("small",null,(ret?`${noites(it)} noites · `:"Só ida · ")+(i===0?"a data mais barata":`mais ${money(m.p-melhores[0].p)} que a mais barata`)));
+      const pr=el("span","nb-p"); pr.append(el("b",null,money(m.p)));
+      b.append(l,pr);
+      b.onclick=()=>{ if(box.dataset.feito) return; box.dataset.feito="1"; box.querySelectorAll("button").forEach(x=>{ x.disabled=true; if(x!==b) x.style.opacity=".5"; }); $("d-exact").checked=true; $("ida").value=dep; if(rt) $("volta").value=ret; updateDateUI(); try{ updateHeroPass(); }catch{} ncUser(`${dayLabel(dep)}${ret?" → "+dayLabel(ret):""} · ${money(m.p)}`); ncNext(); };
+      box.append(b); });
+    await ncSay(box,0);
+    if(caro>melhores[0].p*1.15) await ncSay(`Escolhendo bem a data poupa até ${money(caro-melhores[0].p)} por pessoa em relação aos dias mais caros de ${mesTxt}.`,300);
+    ncCtrl(ncChips([{t:"Ver outro mês",ghost:true,fn:()=>{ box.dataset.feito="1"; box.querySelectorAll("button").forEach(x=>{ x.disabled=true; x.style.opacity=".5"; }); ncUser("Ver outro mês"); pedirMes("Claro. Que mês quer comparar?"); }},intervalo]));
+  }
+  await pedirMes();
 }
 async function ncAskDates(){
+  if($("d-flex").checked && !NC.flexForm) return ncFlexMelhores();
   const flex=$("d-flex").checked, rt=$("t-rt").checked; const box=el("div","nform");
   const mkDate=(id,val)=>{ const i=el("input"); i.type="date"; i.value=val; i.id="nc-"+id; i.min=isoOf(today()); return i; };
   let read;
