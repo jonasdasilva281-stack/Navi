@@ -699,11 +699,17 @@ h1,h2,h3,.price{font-family:var(--f-display)}
 .hand.wel{background:#0b1a2c center/cover no-repeat;transition:background-image .4s}
 .hand.wel::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,18,31,.5) 0%,rgba(8,18,31,.12) 38%,rgba(8,18,31,.55) 100%);pointer-events:none}
 .hand.wel .hand-box{position:relative;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.wel-tag{position:absolute;left:0;right:0;top:calc(clamp(24px,6vh,64px) + env(safe-area-inset-top));margin:0 auto;max-width:920px;text-align:center;color:#fff;font-family:var(--f-display);font-weight:500;font-size:clamp(34px,6.4vw,68px);line-height:1.04;letter-spacing:-.025em;text-shadow:0 4px 30px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.35);padding:0 20px;pointer-events:none;animation:welTag .9s cubic-bezier(.2,.7,.2,1) both}
+.wel-tag{position:absolute;left:0;right:0;top:calc(clamp(24px,6vh,64px) + env(safe-area-inset-top));margin:0 auto;max-width:920px;text-align:center;color:#fff;font-family:var(--f-display);font-weight:500;font-size:clamp(34px,6.4vw,68px);line-height:1.04;letter-spacing:-.025em;text-shadow:0 4px 30px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.35);padding:0 20px;pointer-events:none}
 .wel-tag em{font-family:"Fraunces",var(--f-serif);font-style:italic;font-weight:400;color:#ffb39e;display:inline-block}
 .wel-tag::after{content:"";display:block;width:56px;height:3px;border-radius:3px;background:#e4572e;margin:clamp(12px,2vh,20px) auto 0;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-@keyframes welTag{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.wel-tag{animation:none}}
+/* Abertura: primeiro a frase, sozinha no centro; depois sobe e aparece o quadro da Navi. */
+.wel-tag{animation:welTag 2.2s cubic-bezier(.2,.7,.2,1) both}
+.hand.wel .hand-box{animation:welBox .6s cubic-bezier(.2,.7,.2,1) 1.75s both}
+@keyframes welTag{0%{opacity:0;transform:translateY(calc(26vh + 16px))}25%{opacity:1;transform:translateY(26vh)}62%{opacity:1;transform:translateY(26vh)}100%{opacity:1;transform:none}}
+@keyframes welBox{from{opacity:0;transform:translateY(24px) scale(.98);visibility:hidden}1%{visibility:visible}to{opacity:1;transform:none;visibility:visible}}
+.hand.wel.ja .wel-tag,.hand.wel.ja .hand-box{animation:none}
+@media (max-height:640px){.hand.wel .hand-box{animation-delay:.1s}}
+@media (prefers-reduced-motion:reduce){.wel-tag,.hand.wel .hand-box{animation:none}}
 .wel-cred{position:absolute;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;color:rgba(255,255,255,.75)}
 @media (min-height:641px){.hand.wel{padding-top:clamp(150px,28vh,250px);align-items:start}}
 @media (min-height:641px) and (min-width:700px){.hand.wel{align-items:center}}
@@ -1614,7 +1620,7 @@ function comConsentimento(fn){
   const l=el("a","note","Política de privacidade e cookies"); l.href="/privacidade.html"; box.append(l);
   ov.append(box); document.body.append(ov); ok.focus();
 }
-setTimeout(bannerCookies,1200);
+setTimeout(bannerCookies,2900); // depois da abertura (frase + quadro da Navi)
 
 /* ---------- instalar a app ---------- */
 let INSTALAR=null;
@@ -3022,6 +3028,7 @@ function boasVindas(){
   const opts=el("div","wel-opts"); opts.append(bChat,bBar); box.append(opts);
   if(V){ pergunta.hidden=true; opts.hidden=true; tag.innerHTML='Vamos <em>viajar</em>?'; shr.outra.onclick=()=>{ shr.outra.closest(".shr").remove(); h.textContent="Bem-vindo à Navi"; pergunta.hidden=false; opts.hidden=false; try{ history.replaceState(null,"",location.pathname); }catch{} bChat.focus(); }; }
   ov.append(box); document.body.append(ov);
+  ov.addEventListener("pointerdown",()=>ov.classList.add("ja"),{once:true});
   const fechar=()=>{ ov.remove(); document.removeEventListener("keydown",esc); };
   function fecharTudo(){ fechar(); }
   const esc=e=>{ if(e.key==="Escape"){ fechar(); abrirRobo(); } };
