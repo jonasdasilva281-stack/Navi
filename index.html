@@ -2182,7 +2182,8 @@ async function run(){
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
     if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
       const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); { const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=irAoVivo; bx.append(a1); } const a2=el("button","av-b alt","Comparar em todos os sites"); a2.type="button"; a2.onclick=abrirComparador; bx.append(a2); cw.append(bx); listHost.before(cw); }
-    if(!M.querySelector(".comp-bar")){ const cb=el("div","comp-bar"); cb.append(el("span",null,"Compare também noutros sites: Kiwi.com, Skyscanner, Google Flights, Kayak e mais.")); const bt=el("button","av-b alt","Comparar em todos os sites"); bt.type="button"; bt.onclick=abrirComparador; cb.append(bt); listHost.before(cb); }
+    if(!M.querySelector(".comp-bar")){ const cb=el("div","comp-bar"); cb.append(el("span",null,"Compare também noutros sites: Kiwi.com, Skyscanner, Google Flights, Kayak e mais.")); const bt=el("button","av-b alt","Comparar em todos os sites"); bt.type="button"; bt.onclick=abrirComparador; cb.append(bt);
+      if(ALERTAS_ON){ const ba=el("button","av-b","🔔 Avisar-me se baixar"); ba.type="button"; ba.onclick=()=>abrirAlerta(cheap); cb.append(ba); } listHost.before(cb); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2456,65 +2457,79 @@ const ZONAS=[
 })();
 
 
-/* ---------- alertas ---------- */
-let alertsData={lista:[]};
-function alertsRef(){ return db&&uid ? db.doc("alertas/"+uid) : null; }
+/* ---------- alertas de preço por e-mail (guardados no servidor; aqui só a lista deste aparelho) ---------- */
+let ALERTAS_ON=false;
+const AL_KEY="navi-alertas";
+function alLocal(){ try{ return JSON.parse(localStorage.getItem(AL_KEY)||"[]"); }catch{ return []; } }
+function alGuardar(l){ try{ localStorage.setItem(AL_KEY,JSON.stringify(l)); }catch{} }
+function viagemParaAlerta(rec){
+  const f=form(); const o=code(f.orig), d=code(f.dest);
+  let ida=f.mode==="flex"?"":f.ida, volta=f.rt&&f.mode!=="flex"?f.volta:"";
+  if(rec&&rec.outbound){ ida=String(rec.outbound.departureTime).slice(0,10); volta=rec.inbound?String(rec.inbound.departureTime).slice(0,10):""; }
+  const preco=rec?rec.price:(lastSearch&&lastSearch.f.orig===f.orig&&lastSearch.f.dest===f.dest?lastSearch.cheapest:null);
+  return {origem:o,destino:d,nomeOrigem:cityName(f.orig)||o,nomeDestino:cityName(f.dest)||d,ida,volta:volta||null,adultos:+f.ad||1,criancas:+f.ch||0,moeda:f.cur||CUR,precoAtual:preco||null};
+}
+async function criarAlerta(v,email,alvo){
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw {message:"Escreva um e-mail válido."};
+  if(!v.origem||!v.destino||!v.ida) throw {message:"Escolha primeiro a viagem com datas certas (origem, destino e data de ida)."};
+  const r=await api("alerta",Object.assign({},v,{email,alvo:alvo||null}));
+  const l=alLocal(); l.push({id:r.id,t:r.t,email,o:v.origem,d:v.destino,ida:v.ida,volta:v.volta,alvo:alvo||null,moeda:v.moeda,preco:v.precoAtual,criado:isoOf(today())}); alGuardar(l); renderAlerts();
+  return r;
+}
+function abrirAlerta(rec, depois){
+  const v=viagemParaAlerta(rec);
+  const ov=el("div","hand"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","al-t");
+  const box=el("div","hand-box");
+  const h=el("h3",null,"Avisar quando o preço baixar"); h.id="al-t"; box.append(h);
+  if(!v.ida){ box.append(el("p",null,"Para criar um alerta, escolha primeiro uma viagem com datas certas.")); }
+  else {
+    const sm=el("div","hand-sum"); sm.append(el("b",null,`${cityName($("orig").value)||v.origem} → ${cityName($("dest").value)||v.destino}`), el("span",null,`${dayLabel(v.ida)}${v.volta?" → "+dayLabel(v.volta):" · só ida"}${v.precoAtual?` · hoje desde ${money(v.precoAtual,v.moeda)}`:""}`)); box.append(sm);
+    box.append(el("p",null,"Verificamos o preço uma vez por dia e enviamos-lhe um e-mail quando descer. Grátis, e pode cancelar quando quiser."));
+  }
+  const fm=el("form","nform"); fm.noValidate=true;
+  const em=el("input"); em.type="email"; em.placeholder="nome@exemplo.com"; em.autocomplete="email"; try{ em.value=(alLocal().slice(-1)[0]||{}).email||""; }catch{}
+  const al=el("input"); al.type="number"; al.min="1"; al.step="10"; al.placeholder=v.precoAtual?`ex.: ${Math.round(v.precoAtual*0.9/10)*10}`:"opcional";
+  fm.append(ncField("O seu e-mail",em), ncField(`Avisar quando custar menos de (${v.moeda}) — opcional`,al));
+  const err=el("p","nerr"); const go=el("button","sel","Criar alerta"); go.type="submit"; const back=el("button","btn","Fechar"); back.type="button";
+  const acts=el("div","hand-acts"); acts.append(go,back); fm.append(err,acts); if(v.ida) box.append(fm); else box.append(acts);
+  if(!v.ida) acts.replaceChildren(back);
+  ov.append(box); document.body.append(ov);
+  const close=()=>{ ov.remove(); document.removeEventListener("keydown",esc); }; const esc=e=>{ if(e.key==="Escape") close(); };
+  back.onclick=close; ov.addEventListener("click",e=>{ if(e.target===ov) close(); }); document.addEventListener("keydown",esc);
+  fm.onsubmit=async e=>{ e.preventDefault(); err.textContent=""; go.disabled=true; go.textContent="A criar…";
+    try{ const r=await criarAlerta(v,em.value.trim(),al.value?+al.value:null);
+      box.replaceChildren(el("h3",null,"Alerta criado ✓"), el("p",null, r.email?`Enviámos uma confirmação para ${em.value.trim()}. Vamos verificar o preço todos os dias.`:`Vamos verificar o preço todos os dias e avisamos ${em.value.trim()} quando baixar.`));
+      const ok=el("button","sel","Perfeito"); ok.type="button"; ok.onclick=close; const a2=el("div","hand-acts"); a2.append(ok); box.append(a2); ok.focus(); if(depois) depois(true);
+    }catch(x){ err.textContent=(x&&x.message)||"Não foi possível criar o alerta. Tente outra vez."; go.disabled=false; go.textContent="Criar alerta"; } };
+  (v.ida?em:back).focus();
+}
 function renderAlerts(){
-  const box=$("a-list"); box.replaceChildren();
-  const l=alertsData.lista||[];
+  const box=$("a-list"); if(!box) return; box.replaceChildren();
+  const l=alLocal().filter(a=>daysUntil(a.ida)>=0);
   $("al-count").hidden=!l.length; $("al-count").textContent=String(l.length);
-  if(!db||!uid){ callout(box,"Alertas indisponíveis","Para guardar alertas, abra esta página dentro do Claude, com sessão iniciada."); return; }
-  if(!l.length){ const g=el("div","ghost"); g.append(el("b",null,"Ainda não tem alertas")); g.append(document.createTextNode("Faça uma pesquisa e carregue em \"Criar alerta de preço\", ou preencha o formulário acima.")); box.append(g); return; }
+  if(!l.length){ const g=el("div","ghost"); g.append(el("b",null,"Ainda não tem alertas")); g.append(document.createTextNode("Faça uma pesquisa e carregue em \"Avisar-me se baixar\", ou preencha o formulário acima.")); box.append(g); return; }
   l.forEach(a=>{
     const c=el("article","alert"); const top=el("div","top");
-    top.append(el("span","route",`${cityName(a.origem)} → ${cityName(a.destino)}`));
-    top.append(el("span","b "+(daysUntil(a.ida)<0?"bad":"good"), daysUntil(a.ida)<0?"Viagem já passou":"Ativo"));
-    c.append(top);
+    top.append(el("span","route",`${cityName(a.o)||a.o} → ${cityName(a.d)||a.d}`)); top.append(el("span","b good","Ativo")); c.append(top);
     const kv=el("dl","kv"); const add=(k,v)=>{ kv.append(el("dt",null,k),el("dd",null,v)); };
     add("Datas",`${dayLabel(a.ida)}${a.volta?" → "+dayLabel(a.volta):" · só ida"}`);
-    add("Pessoas",`${a.adultos+(a.criancas||0)} · ${a.malas?a.malas+" mala"+(a.malas>1?"s":"")+" de porão":"só mala de mão"}`);
     add("Avisar quando",a.alvo?`custar menos de ${money(a.alvo,a.moeda)}`:"o preço descer");
-    add("Email",a.email);
-    add("Preço de referência",a.ultimoPreco?`${money(a.ultimoPreco,a.moeda)}${a.ultimaVerificacao?" (visto em "+dayLabel(a.ultimaVerificacao)+")":""}`:"ainda não verificado");
-    c.append(kv);
-    const out=el("p","note"); const r=el("div","row");
-    const chk=el("button","btn","Ver preço agora"); chk.type="button";
-    chk.onclick=async()=>{ chk.disabled=true; out.textContent="A procurar…";
-      try{ const fa={orig:a.origem,dest:a.destino,rt:!!a.volta,ida:a.ida,volta:a.volta||"",ad:a.adultos,ch:a.criancas||0,bag:a.malas||0,flex:0,stops:"",maxlay:"",cls:"M",cur:a.moeda,self:true};
-        const it=cheapestOf(await kiwi(kiwiInput(fa)));
-        if(!it){ out.textContent="Não encontrámos voos para estas datas."; }
-        else { out.replaceChildren(); const prev=a.ultimoPreco; const d=prev?it.price-prev:0;
-          out.append(document.createTextNode(`Agora: ${money(it.price,a.moeda)}${prev?(d<0?` · desceu ${money(-d,a.moeda)}`:d>0?` · subiu ${money(d,a.moeda)}`:" · igual"):""}. `));
-          out.append(buyLink(it.bookingUrl,"Ver e comprar",true)); }
-      }catch(e){ out.textContent=errText(e,KIWI); }
-      chk.disabled=false; };
-    const del=el("button","btn danger","Apagar alerta"); del.type="button";
-    const confirmBox=el("div","row"); confirmBox.hidden=true;
-    const yes=el("button","btn danger","Sim, apagar"); yes.type="button"; const no=el("button","btn","Cancelar"); no.type="button";
-    confirmBox.append(el("span","note","Apagar este alerta?"),yes,no);
-    del.onclick=()=>{ confirmBox.hidden=false; del.hidden=true; };
-    no.onclick=()=>{ confirmBox.hidden=true; del.hidden=false; };
-    yes.onclick=async()=>{ yes.disabled=true; const next={...alertsData,lista:(alertsData.lista||[]).filter(x=>x.id!==a.id)}; try{ await alertsRef().set(next); }catch(e){ out.textContent="Não foi possível apagar. Tente outra vez."; yes.disabled=false; } };
-    r.append(chk,del,confirmBox); c.append(r,out); box.append(c);
+    add("E-mail",a.email); if(a.preco) add("Preço quando criou",money(a.preco,a.moeda)); c.append(kv);
+    const out=el("p","note"); const del=el("button","btn danger","Cancelar alerta"); del.type="button";
+    del.onclick=async()=>{ del.disabled=true; try{ await fetch(`/api/alerta?cancelar=${encodeURIComponent(a.id)}&t=${encodeURIComponent(a.t)}`); alGuardar(alLocal().filter(x=>x.id!==a.id)); renderAlerts(); }catch{ out.textContent="Não foi possível cancelar. Tente outra vez."; del.disabled=false; } };
+    const r=el("div","row"); r.append(del); c.append(r,out); box.append(c);
   });
 }
+function atualizarLinhaAlerta(){ const t=$("a-trip"); if(!t) return; const v=viagemParaAlerta(null); t.textContent=v.origem&&v.destino&&v.ida?`${cityName($("orig").value)} → ${cityName($("dest").value)} · ${dayLabel(v.ida)}${v.volta?" → "+dayLabel(v.volta):" · só ida"}`:"Escolha primeiro a viagem com datas certas no separador Procurar."; }
 $("fa").addEventListener("submit",async e=>{
-  e.preventDefault(); const f=tripF(); const note=$("a-note");
-  if(f.mode==="flex" && !f.fixed){ note.textContent="Com datas flexíveis, faça primeiro a pesquisa: o alerta fica com as datas mais baratas encontradas."; return; }
+  e.preventDefault(); const note=$("a-note"); const v=viagemParaAlerta(null);
   const email=$("a-email").value.trim(); const alvo=$("a-target").value?+$("a-target").value:null;
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ note.textContent="Escreva um email válido para receber o aviso."; $("a-email").focus(); return; }
-  if(!f.orig||!f.dest||!f.ida){ note.textContent="Preencha a viagem no separador Procurar."; return; }
-  if(!alertsRef()){ note.textContent="Para guardar alertas, abra esta página dentro do Claude, com sessão iniciada."; return; }
-  if((alertsData.lista||[]).length>=10){ note.textContent="Pode ter até 10 alertas. Apague um para criar outro."; return; }
-  const a={ id:"a"+Date.now().toString(36), criadoEm:isoOf(today()), origem:place(f.orig)===code(f.orig)?f.orig:f.orig, destino:f.dest, ida:f.ida, volta:f.rt?f.volta:null,
-    adultos:f.ad, criancas:f.ch, malas:f.bag, moeda:f.cur, alvo, email,
-    ultimoPreco: lastSearch&&lastSearch.f.orig===f.orig&&lastSearch.f.dest===f.dest&&lastSearch.f.ida===f.ida&&lastSearch.cur===f.cur ? lastSearch.cheapest : null,
-    ultimaVerificacao: lastSearch ? isoOf(today()) : null };
   $("a-go").disabled=true;
-  try{ await alertsRef().set({...alertsData, lista:[...(alertsData.lista||[]),a]}); note.textContent="Alerta criado. Vamos verificar o preço todos os dias."; $("a-target").value=""; }
-  catch(err){ note.textContent= err&&err.code==="quota_exceeded" ? "Não há espaço para mais alertas." : "Não foi possível guardar o alerta. Tente outra vez."; }
+  try{ const r=await criarAlerta(v,email,alvo); note.textContent=r.email?"Alerta criado. Enviámos-lhe um e-mail de confirmação.":"Alerta criado. Vamos verificar o preço todos os dias."; $("a-target").value=""; }
+  catch(err){ note.textContent=(err&&err.message)||"Não foi possível criar o alerta. Tente outra vez."; }
   $("a-go").disabled=false;
 });
+renderAlerts();
 
 /* ---------- Navi: conversa guiada ---------- */
 const NC={ body:null, busy:false, ctrls:[], awaiting:null };
@@ -2547,7 +2562,8 @@ const IC={
   voltar:'<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
   coracao:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   ajustar:'<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
-  nova:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>'
+  nova:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>',
+  sino:'<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>'
 };
 const icExtra=id=>{ const x=EXTRAS.find(e=>e.id===id); return x?x.icone:""; };
 function ncField(label, input){ const l=el("label","sf"); l.append(el("span",null,label), input); return l; }
@@ -2872,6 +2888,7 @@ function ncMenuFinal(rec){
         {t:"Passeios",sub:dest,ic:icExtra("klook"),fn:()=>{ ncUser(`Passeios em ${dest}`); abrir("klook",`Abri a Klook numa nova janela, com passeios e bilhetes para ${dest}.`,EXTRAS.find(x=>x.id==="klook").link(code($("dest").value))); }}
       ],true));
       ncCtrl(ncChips([{t:"Voltar",ic:IC.voltar,ghost:true,fn:()=>{ ncUser("Voltar"); ncMenuFinal(rec); }}])); }},
+    ...(ALERTAS_ON?[{t:"Avisar-me se baixar",ic:IC.sino,fn:()=>{ ncUser("Avisar-me se o preço baixar"); abrirAlerta(rec,ok=>{ if(ok) ncSay("Combinado! Vou vigiar o preço todos os dias e aviso-o por e-mail quando baixar.",200).then(()=>ncMenuFinal(rec)); }); }}]:[]),
     {t:"Partilhar",ic:IC.partilhar,fn:()=>{ ncUser("Partilhar"); partilharViagem(rec); ncMenuFinal(rec); }},
     {t:"Mais",ic:IC.mais,fn:()=>{ ncUser("Mais opções");
       ncCtrl(ncChips([
@@ -3123,7 +3140,7 @@ function ativarBR(){
   new MutationObserver(ms=>{ for(const m of ms){ if(m.type==="characterData") trNode(m.target); else m.addedNodes.forEach(trNode); } }).observe(document.body,{childList:true,subtree:true,characterData:true});
 }
 
-fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.agente; VIVO=!!e.vivo; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
+fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.agente; VIVO=!!e.vivo; ALERTAS_ON=!!e.alertas; if(ALERTAS_ON){ $("tab-alertas").hidden=false; document.querySelectorAll(".al-only").forEach(x=>x.hidden=false); } TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>

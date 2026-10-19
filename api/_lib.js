@@ -7,6 +7,11 @@ const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "787293"; // marker de par
 const TP_MARKET = process.env.TRAVELPAYOUTS_MARKET || ""; // ex.: "br" ou "pt" (opcional)
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
 const IGNAV_KEY = process.env.IGNAV_API_KEY || ""; // preços ao vivo (ignav.com) — opcional
+// Base de dados dos alertas (Upstash Redis, criada pelo Vercel). Aceita os dois nomes de variáveis.
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
+const RESEND_KEY = process.env.RESEND_API_KEY || "";
+const EMAIL_DE = process.env.ALERTA_REMETENTE || "Navi <alertas@voenavi.pt>";
 const MODELO = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const MODELO_RAPIDO = process.env.ANTHROPIC_MODEL_RAPIDO || "claude-haiku-4-5-20251001";
 
@@ -333,6 +338,33 @@ async function sugerirAlternativas(input, o, d, ida, origens, hubs) {
   return out;
 }
 
+/* ---------- Alertas: base de dados e e-mail ---------- */
+async function redis(...cmd) {
+  if (!REDIS_URL || !REDIS_TOKEN) throw Object.assign(new Error("Os alertas ainda não estão configurados."), { code: "config" });
+  const r = await fetch(REDIS_URL, { method: "POST", headers: { Authorization: "Bearer " + REDIS_TOKEN, "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw Object.assign(new Error("Base de dados: " + (j.error || r.status)), { code: "upstream" });
+  return j.result;
+}
+const temAlertas = () => !!(REDIS_URL && REDIS_TOKEN);
+const temEmail = () => !!RESEND_KEY;
+async function enviarEmail(para, assunto, html) {
+  if (!RESEND_KEY) return false;
+  const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_KEY, "Content-Type": "application/json" }, body: JSON.stringify({ from: EMAIL_DE, to: [para], subject: assunto, html }) });
+  return r.ok;
+}
+function escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function emailBase(titulo, corpo, botao, link, rodape) {
+  return `<!doctype html><html lang="pt"><body style="margin:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;color:#0b1a2c">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden">
+<tr><td style="background:#0b1a2c;padding:20px 24px;font-family:Georgia,serif;font-size:26px;color:#ffffff">na<span style="color:#e4572e">v</span>i</td></tr>
+<tr><td style="padding:24px"><h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:normal;font-size:24px">${titulo}</h1>${corpo}
+${botao ? `<p style="margin:24px 0 8px"><a href="${link}" style="display:inline-block;background:#e4572e;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:999px">${botao}</a></p>` : ""}
+<p style="font-size:12px;color:#5b6776;margin-top:24px">Os preços mudam a toda a hora e podem variar no momento da reserva.</p></td></tr>
+<tr><td style="padding:16px 24px;background:#f4f6f9;font-size:12px;color:#5b6776">${rodape || ""}</td></tr></table></td></tr></table></body></html>`;
+}
+
 /* ---------- Anthropic ---------- */
 async function claude({ system, messages, tools, rapido, maxTokens }) {
   if (!ANTHROPIC_KEY) throw Object.assign(new Error("Falta configurar ANTHROPIC_API_KEY no Vercel."), { code: "config" });
@@ -364,4 +396,4 @@ function limitar(req, max = 30, chave = "geral") {
 function responder(res, status, body) { res.setHeader("Cache-Control", "no-store"); res.status(status).json(body); }
 function erro(res, e) { const st = e.code === "input" ? 400 : e.code === "config" ? 500 : 502; responder(res, st, { error: e.message || "Erro", code: e.code || "erro" }); }
 
-module.exports = { ignavDatas, pesquisar, pesquisarComAlternativas, linkAoVivo, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };
+module.exports = { ignavDatas, ignavPesquisa, redis, temAlertas, temEmail, enviarEmail, escHtml, emailBase, fromDMY, pesquisar, pesquisarComAlternativas, linkAoVivo, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };
