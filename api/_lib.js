@@ -6,6 +6,7 @@ const TP_TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "";
 const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "787293"; // marker de parceiro (público)
 const TP_MARKET = process.env.TRAVELPAYOUTS_MARKET || ""; // ex.: "br" ou "pt" (opcional)
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
+const IGNAV_KEY = process.env.IGNAV_API_KEY || ""; // preços ao vivo (ignav.com) — opcional
 const MODELO = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const MODELO_RAPIDO = process.env.ANTHROPIC_MODEL_RAPIDO || "claude-haiku-4-5-20251001";
 
@@ -167,12 +168,68 @@ async function pesquisar(input) {
   return itens.slice(0, 60);
 }
 
+/* ---------- Preços ao vivo (Ignav) ----------
+ * Só para datas exatas e só uma vez por pesquisa (cada pedido custa ~0,002 $).
+ * O cliente reserva pelo link de afiliado da Aviasales, com a viagem preenchida. */
+async function ignavPesquisa(input) {
+  if (!IGNAV_KEY) return [];
+  const o = iata(input.flyFrom), d = iata(input.flyTo), ida = fromDMY(input.departureDate);
+  const volta = fromDMY(input.returnDate);
+  if (!o || !d || !ida) return [];
+  if (input.departureDateTo && fromDMY(input.departureDateTo) !== ida) return [];
+  if (+input.departureDateFlexDays || input.nights_in_dst_from != null || input.sort === "duration") return [];
+  const adultos = Math.max(1, +input.adults || 1), criancas = Math.max(0, +input.children || 0);
+  const moeda = String(input.currency || "EUR").toUpperCase();
+  const body = { origin: o, destination: d, departure_date: ida, adults: adultos, children: criancas, market: moeda === "BRL" ? "BR" : "PT", allow_self_transfer: !!input.allow_self_transfer };
+  if (input.max_sector_stopovers !== undefined && input.max_sector_stopovers !== "" && input.max_sector_stopovers !== null) body.max_stops = Math.min(2, +input.max_sector_stopovers);
+  if (volta) body.return_date = volta;
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 25000);
+  let j;
+  try {
+    const r = await fetch("https://ignav.com/api/fares/" + (volta ? "round-trip" : "one-way"), { method: "POST", headers: { "X-Api-Key": IGNAV_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl.signal });
+    if (!r.ok) return [];
+    j = await r.json();
+  } catch { return []; } finally { clearTimeout(t); }
+  const pax = adultos + criancas;
+  const aoVivo = linkAoVivo(o, d, ida, volta, adultos);
+  const perna = leg => {
+    const sg = (leg && leg.segments) || []; if (!sg.length) return null;
+    const segs = sg.map(x => ({ from: x.departure_airport, to: x.arrival_airport, fromCity: cidade(x.departure_airport), toCity: cidade(x.arrival_airport), departureTime: String(x.departure_time_local || "").slice(0, 19), arrivalTime: String(x.arrival_time_local || "").slice(0, 19), carrier: x.marketing_carrier_code || "", carrierName: x.operating_carrier_name || leg.carrier || x.marketing_carrier_code || "", flightNumber: String(x.flight_number || "") }));
+    return { from: segs[0].from, to: segs[segs.length - 1].to, departureTime: segs[0].departureTime, arrivalTime: segs[segs.length - 1].arrivalTime, durationSeconds: (+leg.duration_minutes || 0) * 60, stops: segs.length - 1, route: [segs[0].from].concat(segs.map(x => x.to)), segments: segs };
+  };
+  const out = [];
+  for (const it of (j && j.itineraries) || []) {
+    const pr = it.price || {}; if (!(+pr.amount > 0)) continue;
+    if (pr.currency && pr.currency.toUpperCase() !== moeda) continue; // nunca converter moedas às cegas
+    const ob = perna(it.outbound); if (!ob) continue; const ib = volta ? perna(it.inbound) : null; if (volta && !ib) continue;
+    const bags = it.bags || {};
+    out.push({ id: "ig|" + (it.ignav_id || out.length), price: Math.round(+pr.amount), unitPrice: Math.round(+pr.amount / pax), totalDurationSeconds: ob.durationSeconds + (ib ? ib.durationSeconds : 0),
+      bookingUrl: aoVivo, baggage: bags.checked != null ? { checkedBag: +bags.checked, cabinBag: +bags.carry_on || 0 } : null,
+      cached: false, live: true, selfTransfer: !!it.requires_self_transfer, observedAt: j.observed_at || null, outbound: ob, ...(ib ? { inbound: ib } : {}) });
+  }
+  return out.sort((a, b) => a.price - b.price).slice(0, 40);
+}
+
 /*
  * Pesquisa com alternativas, para rotas com poucos preços guardados:
  * 1) datas exatas; 2) datas próximas no(s) mesmo(s) mês(es); 3) a partir do grande aeroporto mais próximo.
  * Devolve sempre o link de pesquisa ao vivo na Aviasales.
  */
 async function pesquisarComAlternativas(input) {
+  const vivoP = ignavPesquisa(input).catch(() => []);
+  const r = await pesquisarComAlternativasTP(input);
+  const vivo = await vivoP;
+  if (vivo.length) {
+    const resto = (r.itineraries || []).filter(x => x.approxDatas || x.approx);
+    const exatos = (r.itineraries || []).filter(x => !x.approxDatas && !x.approx);
+    r.itineraries = vivo.concat(exatos).sort((a, b) => a.price - b.price).concat(resto);
+    r.aoVivoFonte = true;
+    if (r.aviso && r.aviso.tipo === "vazio") { r.aviso = null; r.sugestoes = []; }
+    else if (r.aviso && r.aviso.tipo === "datas") r.aviso = null;
+  }
+  return r;
+}
+async function pesquisarComAlternativasTP(input) {
   const o = iata(input.flyFrom), d = iata(input.flyTo);
   const ida = fromDMY(input.departureDate);
   const volta = fromDMY(input.returnDate);

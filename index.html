@@ -1221,7 +1221,7 @@ const DOW = ["dom","seg","ter","qua","qui","sex","sáb"];
 const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const MESL = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 let mcp = null, sample = null, db = null, uid = null, busy = false;
-let AI = false; // muda para true quando a chave da Anthropic estiver no Vercel
+let AI = false; let VIVO = false; // muda para true quando a chave da Anthropic estiver no Vercel
 let lastSearch = null; // {f, cheapest}
 
 /* ---------- utilidades ---------- */
@@ -1763,10 +1763,11 @@ let CTX={pax:1,bagsWanted:0};
 function priceSub(){ return `Total estimado com taxas · ${CTX.pax} pessoa${CTX.pax>1?"s":""} · confirme no site`; }
 function badges(it, infos){
   const w=el("div","badges"); const add=(t,c)=>w.append(el("span","b "+(c||""),t));
+  if(it.live) add("Preço de hoje","good");
   if(it.approx==="datas"||it.approxDatas) add("Data próxima da pedida","warn");
   if(it.estadiaDiferente&&it.inbound) add(`Estadia de ${Math.round((pdate(it.inbound.departureTime)-pdate(it.outbound.departureTime))/86400000)} dias`,"warn");
   if(it.approx==="origem") add(`Sai de ${(it.outbound.segments&&it.outbound.segments[0].fromCity)||it.outbound.from}`,"bad");
-  if(it.baggage==null){ add(CTX.bagsWanted?"Bagagem: confirme no site":"Preço visto nas últimas 48 h","warn"); }
+  if(it.baggage==null){ add(CTX.bagsWanted?"Bagagem: confirme no site":(it.live?"Bagagem: confirme no site":"Preço visto nas últimas 48 h"),"warn"); }
   const got=it.baggage?(+it.baggage.checkedBag||0):0;
   if(it.baggage==null){}
   else if(CTX.bagsWanted>0 && got<CTX.bagsWanted) add(got?`Só ${got} de ${CTX.bagsWanted} malas incluídas`:"Mala de porão NÃO incluída","bad");
@@ -2775,7 +2776,7 @@ async function ncFreeText(text){
     if(!NC.queue.length) NC.queue=["orig","dest","type","mode","dates","pax","prefs","confirm"]; ncNext();
   }
 }
-document.addEventListener("navi:start",()=>{ if(!NC.body) return; ncLock(); ncSay(form().mode==="flex"?"Combinado. Vou testar todas as combinações de datas e comparar companhias. Demora uns segundos.":"Combinado. Estou a comparar companhias e preços.",200).then(()=>{ if(!busy) return;
+document.addEventListener("navi:start",()=>{ if(!NC.body) return; ncLock(); ncSay(form().mode==="flex"?"Combinado. Vou testar todas as combinações de datas e comparar companhias. Demora uns segundos.":(VIVO?"Combinado. Estou a ver os preços de hoje em várias companhias e agências.":"Combinado. Estou a comparar companhias e preços."),200).then(()=>{ if(!busy) return;
   const v=el("div","voo-anim"); const f=form(); v.innerHTML=`<div class="va-row"><b>${code(f.orig)||""}</b><svg viewBox="0 0 220 60" aria-hidden="true"><path class="va-arc" d="M10 50 Q110 -6 210 50" fill="none" stroke-width="2.4" stroke-dasharray="3 7" stroke-linecap="round"/><g class="va-plane"><path d="M0-7L6 7L0 3.5L-6 7Z" transform="rotate(90)"/></g></svg><b>${code(f.dest)||""}</b></div><span class="va-txt">A procurar os melhores preços…</span>`;
   const r=ncRow("bot voo"); r.append(v); ncScroll(); NC.vooAnim=r; }); });
 document.addEventListener("navi:done",()=>{ if(NC.vooAnim){ NC.vooAnim.remove(); NC.vooAnim=null; } });
@@ -3103,7 +3104,7 @@ function ativarBR(){
   new MutationObserver(ms=>{ for(const m of ms){ if(m.type==="characterData") trNode(m.target); else m.addedNodes.forEach(trNode); } }).observe(document.body,{childList:true,subtree:true,characterData:true});
 }
 
-fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.agente; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
+fetch("/api/estado").then(r=>r.json()).then(e=>{ aplicarPais(e.pais); AI=!!e.agente; VIVO=!!e.vivo; TPCFG.marker=e.marker||""; TPCFG.kiwiP=e.kiwiP||""; if(!AI){ $("nc-text").placeholder="Escreva a cidade ou toque nas respostas"; $("o-alt").checked=false; $("o-alt").closest("label").hidden=true; } }).catch(()=>{});
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{})); }
 })();
 </script>
