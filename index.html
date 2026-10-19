@@ -2598,27 +2598,35 @@ async function ncFlexMelhores(){
     const f=form(); const v=el("div","voo-anim");
     v.innerHTML=`<div class="va-row"><b>${code(f.orig)||""}</b><svg viewBox="0 0 220 60" aria-hidden="true"><path class="va-arc" d="M10 50 Q110 -6 210 50" fill="none" stroke-width="2.4" stroke-dasharray="3 7" stroke-linecap="round"/><g class="va-plane"><path d="M0-7L6 7L0 3.5L-6 7Z" transform="rotate(90)"/></g></svg><b>${code(f.dest)||""}</b></div><span class="va-txt">A comparar os dias de ${mesTxt}…</span>`;
     const anim=ncRow("bot voo"); anim.append(v); ncScroll();
-    const input=kiwiInput(Object.assign({},f,{ad:1,ch:0,rt:false,volta:""}),{departureDate:dmy(isoOf(ini0)),departureDateTo:dmy(isoOf(fim))});
-    delete input.returnDate; delete input.max_sector_stopovers; delete input.stopover_to;
-    if(rt){ input.nights_in_dst_from=nMin; input.nights_in_dst_to=nMax; }
-    let lista=[]; try{ const r=await api("precos",input); lista=Array.isArray(r&&r.itineraries)?r.itineraries:[]; }catch{}
-    anim.remove();
     const ymd=x=>String(x||"").slice(0,10);
-    const noites=it=>it.inbound?Math.round((pdate(ymd(it.inbound.departureTime))-pdate(ymd(it.outbound.departureTime)))/86400000):0;
-    lista=lista.filter(it=>{ const dep=ymd(it.outbound.departureTime); if(dep<isoOf(ini0)||dep>isoOf(fim)) return false; if(rt){ if(!it.inbound) return false; const n=noites(it); return n>=nMin&&n<=nMax; } return !it.inbound; });
-    const porData=new Map(); lista.forEach(it=>{ const k=ymd(it.outbound.departureTime)+"|"+(it.inbound?ymd(it.inbound.departureTime):""); const p=it.unitPrice||it.price; if(!porData.has(k)||p<porData.get(k).p) porData.set(k,{it,p}); });
+    const nts=(a,b)=>b?Math.round((pdate(b)-pdate(a))/86400000):0;
+    let entradas=[], vivo=false;
+    // 1) Preços de hoje (Ignav): um pedido compara o mês inteiro.
+    if(VIVO){ const stay=!rt?null:({2:3,5:7,10:14,17:21})[nMin]||Math.round((nMin+nMax)/2);
+      try{ const r=await api("datas",{origem:code(f.orig),destino:code(f.dest),inicio:isoOf(ini0),fim:isoOf(fim),stay,currency:f.cur});
+        if(r&&r.datas&&r.datas.length){ vivo=true; entradas=r.datas.map(x=>({dep:x.ida,ret:x.volta||"",p:x.preco})); } }catch{} }
+    // 2) Sem preços de hoje: preços guardados.
+    if(!entradas.length){
+      const input=kiwiInput(Object.assign({},f,{ad:1,ch:0,rt:false,volta:""}),{departureDate:dmy(isoOf(ini0)),departureDateTo:dmy(isoOf(fim))});
+      delete input.returnDate; delete input.max_sector_stopovers; delete input.stopover_to;
+      if(rt){ input.nights_in_dst_from=nMin; input.nights_in_dst_to=nMax; }
+      let lista=[]; try{ const r=await api("precos",input); lista=Array.isArray(r&&r.itineraries)?r.itineraries:[]; }catch{}
+      lista.forEach(it=>{ const dep=ymd(it.outbound.departureTime), ret=it.inbound?ymd(it.inbound.departureTime):""; if(dep<isoOf(ini0)||dep>isoOf(fim)) return; if(rt){ if(!ret) return; const n=nts(dep,ret); if(n<nMin||n>nMax) return; } else if(ret) return; entradas.push({dep,ret,p:it.unitPrice||it.price}); });
+    }
+    anim.remove();
+    const porData=new Map(); entradas.forEach(e=>{ const k=e.dep+"|"+e.ret; if(!porData.has(k)||e.p<porData.get(k).p) porData.set(k,e); });
     const melhores=[...porData.values()].sort((a,b)=>a.p-b.p).slice(0,5);
     if(!melhores.length){
-      await ncSay(`Ainda não tenho preços guardados para ${mesTxt} nesta rota. Quer experimentar outro mês, ou indicar as datas?`,300);
+      await ncSay(`Ainda não encontrei preços para ${mesTxt} nesta rota. Quer experimentar outro mês, ou indicar as datas?`,300);
       ncCtrl(ncChips(meses.filter(m=>m.getMonth()!==d.getMonth()).slice(0,4).map(m=>({t:nomeMes(m),fn:()=>{ ncUser(nomeMes(m)); escolherMes(m); }})).concat([intervalo,certas])));
       return;
     }
     const caro=Math.max(...[...porData.values()].map(x=>x.p));
-    await ncSay(`Estas são as melhores datas de ${mesTxt}, da mais barata para a mais cara (preço por pessoa${rt?", ida e volta":""}):`,300);
+    await ncSay(`${vivo?"Comparei os preços de hoje para todos os dias de "+mesTxt+". ":""}Estas são as melhores datas${vivo?"":" de "+mesTxt}, da mais barata para a mais cara (preço por pessoa${rt?", ida e volta":""}):`,300);
     const box=el("div","nbest");
-    melhores.forEach((m,i)=>{ const it=m.it, dep=ymd(it.outbound.departureTime), ret=it.inbound?ymd(it.inbound.departureTime):"";
+    melhores.forEach((m,i)=>{ const dep=m.dep, ret=m.ret;
       const b=el("button","nbest-opt"+(i===0?" top":"")); b.type="button";
-      const l=el("span","nb-d"); if(i===0) l.append(el("em",null,"Melhor preço")); l.append(el("b",null,dayLabel(dep)+(ret?" → "+dayLabel(ret):"")), el("small",null,(ret?`${noites(it)} noites · `:"Só ida · ")+(i===0?"a data mais barata":`mais ${money(m.p-melhores[0].p)} que a mais barata`)));
+      const l=el("span","nb-d"); if(i===0) l.append(el("em",null,vivo?"Melhor preço hoje":"Melhor preço")); l.append(el("b",null,dayLabel(dep)+(ret?" → "+dayLabel(ret):"")), el("small",null,(ret?`${nts(dep,ret)} noites · `:"Só ida · ")+(i===0?"a data mais barata":`mais ${money(m.p-melhores[0].p)} que a mais barata`)));
       const pr=el("span","nb-p"); pr.append(el("b",null,money(m.p)));
       b.append(l,pr);
       b.onclick=()=>{ if(box.dataset.feito) return; box.dataset.feito="1"; box.querySelectorAll("button").forEach(x=>{ x.disabled=true; if(x!==b) x.style.opacity=".5"; }); $("d-exact").checked=true; $("ida").value=dep; if(rt) $("volta").value=ret; updateDateUI(); try{ updateHeroPass(); }catch{} ncUser(`${dayLabel(dep)}${ret?" → "+dayLabel(ret):""} · ${money(m.p)}`); ncNext(); };

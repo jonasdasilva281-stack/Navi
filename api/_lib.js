@@ -210,6 +210,29 @@ async function ignavPesquisa(input) {
   return out.sort((a, b) => a.price - b.price).slice(0, 40);
 }
 
+// Melhores datas de um mês com preços de hoje (Ignav, 1 pedido para até 31 dias de partida).
+async function ignavDatas(q) {
+  if (!IGNAV_KEY) return null;
+  const o = iata(q.origem), d = iata(q.destino);
+  if (!o || !d || !/^\d{4}-\d{2}-\d{2}$/.test(q.inicio || "") || !/^\d{4}-\d{2}-\d{2}$/.test(q.fim || "")) throw Object.assign(new Error("Pedido de datas inválido."), { code: "input" });
+  const hoje = new Date().toISOString().slice(0, 10);
+  let ini = q.inicio < hoje ? hoje : q.inicio, fim = q.fim;
+  if (daysDiff(ini, fim) > 30) fim = addDays(ini, 30);
+  if (fim < ini) return [];
+  const moeda = String(q.currency || "EUR").toUpperCase();
+  const body = { origin: o, destination: d, departure_date_range: { start: ini, end: fim }, adults: 1, market: moeda === "BRL" ? "BR" : "PT" };
+  if (q.stay != null && q.stay !== "") body.stay_days = Math.max(0, Math.min(365, +q.stay));
+  if (q.maxStops != null && q.maxStops !== "") body.max_stops = Math.min(2, +q.maxStops);
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 25000);
+  try {
+    const r = await fetch("https://ignav.com/api/fares/cheapest-dates", { method: "POST", headers: { "X-Api-Key": IGNAV_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl.signal });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return ((j && j.dates) || []).filter(x => x && x.price && +x.price.amount > 0 && (!x.price.currency || x.price.currency.toUpperCase() === moeda))
+      .map(x => ({ ida: x.departure_date, volta: x.return_date || null, preco: Math.round(+x.price.amount), link: linkAoVivo(o, d, x.departure_date, x.return_date || null, 1) }));
+  } catch { return null; } finally { clearTimeout(t); }
+}
+
 /*
  * Pesquisa com alternativas, para rotas com poucos preços guardados:
  * 1) datas exatas; 2) datas próximas no(s) mesmo(s) mês(es); 3) a partir do grande aeroporto mais próximo.
@@ -341,4 +364,4 @@ function limitar(req, max = 30, chave = "geral") {
 function responder(res, status, body) { res.setHeader("Cache-Control", "no-store"); res.status(status).json(body); }
 function erro(res, e) { const st = e.code === "input" ? 400 : e.code === "config" ? 500 : 502; responder(res, st, { error: e.message || "Erro", code: e.code || "erro" }); }
 
-module.exports = { pesquisar, pesquisarComAlternativas, linkAoVivo, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };
+module.exports = { ignavDatas, pesquisar, pesquisarComAlternativas, linkAoVivo, claude, textoDe, jsonDe, limitar, responder, erro, cidade, iata };
