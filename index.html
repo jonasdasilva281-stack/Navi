@@ -211,6 +211,16 @@
 .nv-rodape{max-width:1180px;margin:32px auto 0;padding:0 4px 24px;font-size:11.5px;color:#8a95a3;line-height:1.5;text-align:center}
 .nv-rodape p{margin:0}
 /* avião a voar no chat enquanto procura */
+.hand.comp .hand-box{max-width:460px}
+.comp-list{display:grid;gap:8px;margin:6px 0 4px}
+.comp-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;text-decoration:none;cursor:pointer;transition:border-color .15s,transform .15s}
+.comp-opt:hover,.comp-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
+.comp-opt:first-child{border-color:#e4572e}
+.comp-tx{display:grid;gap:2px;min-width:0}.comp-tx b{font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.comp-tx small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.comp-tx em{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#137a43;background:#e7f7ee;border-radius:999px;padding:2px 8px}
+.comp-ar{flex:none;color:#e4572e;font-weight:700;font-size:18px}
+.comp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 10px;border:1px dashed var(--line);border-radius:14px;font-size:14px;color:var(--muted)}
+.comp-nota{font-size:12.5px;color:var(--muted)}
 .nbest{display:grid;gap:8px;width:100%;max-width:420px}
 .nbest-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
 .nbest-opt:hover,.nbest-opt:focus-visible{border-color:#e4572e;transform:translateY(-1px)}
@@ -1622,7 +1632,7 @@ function instalarApp(){
   try{ if(new URLSearchParams(location.search).get("abrir")==="chat") setTimeout(()=>{ document.querySelectorAll(".hand.wel").forEach(x=>x.remove()); abrirRobo(); },300); }catch{} })();
 
 /* ---------- passagem para o pagamento no parceiro ---------- */
-const PARCEIROS=[["aviasales","Aviasales"],["kiwi.tpo.lv","Kiwi.com"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
+const PARCEIROS=[["trip.com","Trip.com"],["aviasales","Aviasales"],["kiwi.tpo.lv","Kiwi.com"],["tp.media","Kiwi.com"],["kiwi.com","Kiwi.com"],["skyscanner","Skyscanner"],["momondo","Momondo"],["kayak","Kayak"],["google.com/travel","Google Flights"]];
 function parceiroDe(href){ const h=String(href||"").toLowerCase(); const m=PARCEIROS.find(([k])=>h.includes(k)); return m?m[1]:null; }
 function abrirReserva(href, it){
   const nome=parceiroDe(href)||"parceiro";
@@ -1655,7 +1665,43 @@ function kiwiLink(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); 
   if(!o||!d||!ida||!TPCFG.kiwiP) return KIWI_CURTO;
   const u=`https://www.kiwi.com/${PAIS==="BR"?"br":"pt"}/search/results/${o}/${d}/${ida}/${volta||"no-return"}?adults=${Math.max(1,+f.ad||1)}&sortBy=price`;
   return `https://tp.media/r?marker=${encodeURIComponent(TPCFG.marker||"787293")}&p=${encodeURIComponent(TPCFG.kiwiP)}&trs=583106&u=${encodeURIComponent(u)}`; }catch{ return KIWI_CURTO; } }
-function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar mais opções"); a.type="button"; a.onclick=()=>abrirReserva(kiwiLink(),null); return a; }
+// Outros buscadores, com a viagem do cliente já preenchida. Os de afiliado aparecem primeiro.
+function viagemAtual(){ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):""; return {o,d,ida,volta,ad:Math.max(1,+f.ad||1),ch:+f.ch||0}; }
+function buscadores(){ const v=viagemAtual(); const BR=PAIS==="BR"; const yymmdd=x=>x?x.slice(2).replace(/-/g,""):""; const n=v.ad;
+  const L=[];
+  L.push({nome:"Navi · preços de hoje",sub:"Centenas de companhias e agências, aqui dentro da Navi",tag:"Recomendado",fn:()=>{ fecharComp(); irAoVivo(); }});
+  L.push({nome:"Kiwi.com",sub:"Combina companhias diferentes para baixar o preço",url:kiwiLink()});
+  if(v.o&&v.d&&v.ida){
+    L.push({nome:"Skyscanner",sub:"Compara companhias e agências de todo o mundo",url:`https://www.skyscanner.${BR?"com.br":"pt"}/transport/flights/${v.o.toLowerCase()}/${v.d.toLowerCase()}/${yymmdd(v.ida)}/${v.volta?yymmdd(v.volta)+"/":""}?adultsv2=${n}${v.ch?"&childrenv2="+Array(v.ch).fill(8).join("|"):""}&currency=${CUR}`});
+    L.push({nome:"Google Flights",sub:"Calendário de preços e alertas da Google",url:`https://www.google.com/travel/flights?q=${encodeURIComponent(`Flights from ${v.o} to ${v.d} on ${v.ida}${v.volta?` through ${v.volta}`:" one way"}${n>1?` for ${n} adults`:""}`)}&hl=${BR?"pt-BR":"pt-PT"}&curr=${CUR}`});
+    L.push({nome:"Kayak",sub:"Compara centenas de sites de viagens",url:`https://www.kayak.${BR?"com.br":"pt"}/flights/${v.o}-${v.d}/${v.ida}${v.volta?"/"+v.volta:""}${n>1?"/"+n+"adults":""}?sort=price_a`});
+    L.push({nome:"Momondo",sub:"Muitas vezes encontra tarifas de agências pequenas",url:`https://www.momondo.${BR?"com.br":"pt"}/flight-search/${v.o}-${v.d}/${v.ida}${v.volta?"/"+v.volta:""}${n>1?"/"+n+"adults":""}?sort=price_a`});
+    L.push({nome:"Trip.com",sub:"Boas tarifas para a Ásia e voos de longo curso",url:`https://www.trip.com/flights/showfarefirst?dcity=${v.o.toLowerCase()}&acity=${v.d.toLowerCase()}&ddate=${v.ida}${v.volta?"&rdate="+v.volta+"&triptype=rt":"&triptype=ow"}&class=y&quantity=${n}&locale=${BR?"pt-BR":"pt-PT"}&curr=${CUR}`});
+  }
+  return L; }
+let fecharComp=()=>{};
+function abrirComparador(){
+  const v=viagemAtual();
+  const ov=el("div","hand comp"); ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","comp-t");
+  const box=el("div","hand-box");
+  const h=el("h3",null,"Comparar em todos os sites"); h.id="comp-t"; box.append(h);
+  box.append(el("p",null, v.o&&v.d&&v.ida ? `A sua viagem ${v.o} → ${v.d}${v.ida?`, ${dayLabel(v.ida)}${v.volta?" → "+dayLabel(v.volta):", só ida"}`:""} já vai preenchida em cada um. Abra os que quiser e compare.` : "Escolha primeiro a origem, o destino e as datas para a pesquisa ir já preenchida."));
+  const lista=el("div","comp-list");
+  buscadores().forEach(b=>{ let a;
+    if(b.url){ a=el("a","comp-opt"); a.href=b.url; a.target="_blank"; a.rel="noopener"; a.dataset.ok="1"; }
+    else { a=el("button","comp-opt"); a.type="button"; a.onclick=b.fn; }
+    const t=el("span","comp-tx"); const nm=el("b",null,b.nome); if(b.tag) nm.append(el("em",null,b.tag)); t.append(nm, el("small",null,b.sub));
+    const ar=el("span","comp-ar","↗"); ar.setAttribute("aria-hidden","true"); a.append(t,ar); lista.append(a); });
+  box.append(lista);
+  box.append(el("p","comp-nota","Os preços mudam a toda a hora e podem variar entre sites. A reserva é feita no site que escolher."));
+  const back=el("button","btn","Fechar"); back.type="button"; const acts=el("div","hand-acts"); acts.append(back); box.append(acts);
+  ov.append(box); document.body.append(ov);
+  const close=()=>{ ov.remove(); document.removeEventListener("keydown",esc); }; fecharComp=close;
+  const esc=e=>{ if(e.key==="Escape") close(); };
+  back.onclick=close; ov.addEventListener("click",e=>{ if(e.target===ov) close(); }); document.addEventListener("keydown",esc);
+  const f1=lista.querySelector(".comp-opt"); if(f1) f1.focus();
+}
+function kiwiBtn(){ const a=el("button","btn kiwi-btn","Comparar em todos os sites"); a.type="button"; a.onclick=abrirComparador; return a; }
 // Pesquisa ao vivo dentro da Navi (White Label da Travelpayouts em /voos.html).
 function urlAoVivo(){ try{ const f=form(); const o=code(f.orig), d=code(f.dest); const ida=f.mode==="flex"?f.wFrom:f.ida; const volta=f.rt?(f.mode==="flex"?addDays(f.wFrom,Math.max(1,f.sMin)):f.volta):"";
   const q=new URLSearchParams(); if(o){ q.set("de",o); q.set("on",cityName(f.orig)); } if(d){ q.set("para",d); q.set("dn",cityName(f.dest)); } if(ida) q.set("ida",ida); if(volta) q.set("volta",volta); q.set("ad",String(Math.max(1,+f.ad||1))); if(+f.ch) q.set("ch",String(+f.ch));
@@ -2124,7 +2170,8 @@ async function run(){
     facts.codes={o:cheap.outbound.from,d:cheap.outbound.to};
     lastSearch={f,cheapest:cheap.price,cur:f.cur};
     if(AVISO&&AVISO.tipo!=="vazio"&&!M.querySelector(".aviso-fonte")){ const cw=el("div","callout aviso-fonte"); cw.append(el("b",null,AVISO.tipo==="origem"?"Melhor preço a partir de uma cidade próxima":"Melhores preços perto das suas datas"), el("p",null,AVISO.texto));
-      const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); { const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=irAoVivo; bx.append(a1); } const a2=el("button","av-b alt","Comparar mais opções"); a2.type="button"; a2.onclick=()=>abrirReserva(kiwiLink(),null); bx.append(a2); cw.append(bx); listHost.before(cw); }
+      const bx=el("p","av-live"); bx.append(el("span",null,"Quer a sua data exata?")); { const a1=el("button","av-b","Ver preços de hoje"); a1.type="button"; a1.onclick=irAoVivo; bx.append(a1); } const a2=el("button","av-b alt","Comparar em todos os sites"); a2.type="button"; a2.onclick=abrirComparador; bx.append(a2); cw.append(bx); listHost.before(cw); }
+    if(!M.querySelector(".comp-bar")){ const cb=el("div","comp-bar"); cb.append(el("span",null,"Compare também noutros sites: Kiwi.com, Skyscanner, Google Flights, Kayak e mais.")); const bt=el("button","av-b alt","Comparar em todos os sites"); bt.type="button"; bt.onclick=abrirComparador; cb.append(bt); listHost.before(cb); }
     step("main",`${pool.length} opções encontradas a partir de ${money(cheap.price)}`,"ok");
     return cheap;
   }).catch(e=>{ clear(listHost); callout(listHost,"Não foi possível procurar",errText(e,KIWI),"err",()=>{busy=false;run();}); step("main","A pesquisa principal falhou","err"); return null; });
@@ -2747,7 +2794,7 @@ document.addEventListener("navi:done",async e=>{
     if(SUG.length) await ncSay(SUG.some(g=>g.tipo!=="mes")?"Mantive a sua pesquisa como pediu. Se aceitar mudar alguma coisa, encontrei estas opções. Quer ver alguma?":"Mantive as suas cidades. Noutras datas encontrei estas opções. Quer ver alguma?",300);
     const chips=SUG.slice(0,3).map((g,i)=>({t:`${sugTexto(g)} · ${money(g.preco)}`,primary:i===0,fn:()=>{ ncUser(`Sim: ${sugTexto(g)}`); usarSugestao(g); }}));
     chips.push({t:"Ver preços de hoje, ao vivo",primary:!SUG.length,fn:()=>{ ncUser("Ver preços de hoje, ao vivo"); irAoVivo(); }});
-    chips.push({t:"Comparar mais opções",fn:()=>{ ncUser("Comparar mais opções"); abrirReserva(kiwiLink(),null); }});
+    chips.push({t:"Comparar em todos os sites",fn:()=>{ ncUser("Comparar em todos os sites"); abrirComparador(); }});
     chips.push({t:"Mudar datas",fn:()=>{ ncUser("Mudar datas"); NC.queue=["mode","dates","confirm"]; ncNext(); }},{t:"Recomeçar",fn:()=>ncStart()});
     ncCtrl(ncChips(chips)); return; }
   const c=d.cheapest, pool=(window.__VIEW&&window.__VIEW.pool)||[c];
